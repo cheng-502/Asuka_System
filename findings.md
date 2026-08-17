@@ -1,0 +1,130 @@
+# Auaka System — Findings and Decisions
+
+## Project Context
+
+- Project directory: `D:\1job\Auaka System`
+- Directory was found and currently contains no visible files.
+- MVP-1 is therefore treated as a new project foundation rather than a modification to an existing implementation.
+- Source Obsidian Vault: `C:\Users\lin20\Desktop\广药文件\Obsidian Vault`
+- Read-only inventory found 387 Markdown files.
+- The Vault contains hidden/configuration folders, attachments/assets, templates, code-learning folders, and project notes; ingestion needs explicit exclusion rules.
+
+## Confirmed Product Intent
+
+The distinctive first demo is not a chatbot. It is a spatial interface for a personal knowledge base: the user sees their real Obsidian knowledge represented as a semantic 3D space and uses hand motion to navigate and select knowledge.
+
+## Confirmed Data Separation
+
+MVP-1 uses only note-level embeddings:
+
+```text
+Obsidian Markdown → Note Embedding → UMAP 3D → Three.js
+```
+
+The later system will use a separate chunk-level retrieval path:
+
+```text
+Chunk Embedding → Vector DB → RAG → LLM / Agent
+```
+
+The UMAP coordinates are for human-facing visualization and must not be used as a replacement for retrieval vectors.
+
+## Confirmed Embedding Requirement
+
+- Embeddings must be multilingual.
+- Cross-language semantic equivalence is a hard requirement: Chinese `目标检测` and English `object detection` should be near each other in embedding space and therefore plausibly near each other in the UMAP visualization.
+- The model runs locally during offline indexing; the browser never loads the embedding model.
+
+## Confirmed Interaction Separation
+
+```text
+Camera → MediaPipe Hand Landmarker → Gesture Engine
+       → Pointer / Pinch / Open Palm → Three.js interaction
+```
+
+The gesture engine should emit semantic events, not directly manipulate Three.js internals. This keeps hand tracking replaceable and makes interaction testable without a camera.
+
+## Confirmed MVP-1 Interaction Contract
+
+- Pointer: extended index fingertip controls a 2D screen pointer.
+- Pinch: index fingertip and thumb pinch selects the node under the pointer.
+- Open Palm: cancels the current selection or collapses node details.
+- Selection method: normalized fingertip screen coordinates → Three.js Raycaster → hovered/intersected node.
+- Main layout: full-screen 3D knowledge space with a small camera preview in the upper-left corner.
+
+## Confirmed Hand-Tracking Asset Policy
+
+The Hand Landmarker model is a versioned local asset:
+
+```text
+frontend/public/models/hand_landmarker.task
+```
+
+The model is pinned and loaded locally to prioritize reproducibility, eliminate runtime download uncertainty, stabilize development/demo behavior, reduce HCI coupling to external services, and support offline demonstrations.
+
+## Confirmed Node Visual Encoding
+
+- Position: UMAP 3D coordinates.
+- Color: Obsidian top-level folder / knowledge domain.
+- Size: explicit Obsidian link count.
+- Glow: current Pointer hover or Pinch selection.
+- Solid edges: explicit `[[wikilink]]` relationships.
+- Dashed edges: embedding semantic-neighbor relationships.
+
+## Confirmed Node Detail UI
+
+- The note title remains visible after selection.
+- Detail content is organized as three switchable tabs:
+  - Summary
+  - Explicit Wikilink relationships
+  - Embedding semantic-neighbor relationships
+- The panel should not dump the full note body into the 3D scene.
+
+## Confirmed Knowledge-Space Artifact Contract
+
+`knowledge-space.json` is versioned and stores computation context, not only nodes:
+
+```json
+{
+  "version": 1,
+  "generated_at": "...",
+  "embedding": {
+    "model": "BAAI/bge-m3",
+    "dimension": 1024
+  },
+  "umap": {
+    "n_components": 3,
+    "random_state": 42
+  },
+  "source": {
+    "vault_hash": "..."
+  },
+  "nodes": [],
+  "links": []
+}
+```
+
+The final design must also identify the pipeline version used to generate the artifact so layout changes can be traced to Vault content, model, UMAP parameters, or pipeline code.
+
+## Confirmed Semantic-Link Policy
+
+- Store a bounded Top-K semantic-neighbor candidate list with similarity values.
+- Render at most 5 semantic links for the currently focused node.
+- Apply `similarity >= threshold` in addition to Top-K; do not force five links for isolated notes.
+- Do not hard-code the threshold before inspecting the real Vault's similarity distribution. Calibrate it after the first real indexing run.
+
+## Confirmed Relationship-Deduplication Policy
+
+- Wikilink relationships are explicit user-authored knowledge and remain fully preserved in the data layer.
+- Semantic links are model-inferred and remain separately represented with similarity values.
+- If the same pair has both relationship types, preserve both in data and render one visually merged edge with combined relationship metadata.
+- Unselected nodes use local/low-opacity relationship rendering; a selected node reveals its complete Wikilink neighborhood.
+
+## Product Evolution (Not MVP-1)
+
+- MVP-2: voice query, knowledge search, knowledge-space focus, chunk embeddings, vector search, RAG, and LLM answers.
+- MVP-3: Agent actions that retrieve knowledge, create/update Obsidian notes, re-embed the vault, and add new nodes to the space.
+
+## Design Principle
+
+The final differentiator is a knowledge space that can eventually be changed by an Agent. MVP-1 intentionally proves the spatial knowledge interface and hand interaction first, before adding retrieval or automation complexity.
