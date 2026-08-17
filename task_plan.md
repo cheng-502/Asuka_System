@@ -72,3 +72,4 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 |---|---:|---|
 | Patch context mismatch while updating planning files | 1 | Re-read current file sections and applied smaller targeted patches |
 | Design document parent directory did not exist; sandbox directory creation was denied | 1 | Requested scoped permission, created `docs/superpowers/specs`, and retried the document write |
+| Chinese design-document patch contained an invalid hunk line | 1 | Split the document into two smaller patches and verified the resulting file |

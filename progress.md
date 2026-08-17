@@ -17,6 +17,7 @@
 - Confirmed MediaPipe Hand Landmarker as a pinned local asset at `frontend/public/models/hand_landmarker.task` for reproducible offline demos.
 - Confirmed Gesture Engine stability rules: smoothed Pointer, stable-frame Pinch/Open Palm events, release-before-retrigger, and timeout-based No Hand clearing.
 - Wrote the approved architecture design to `docs/superpowers/specs/2026-08-18-gesture-controlled-knowledge-space-design.md`.
+- Added the complete Chinese version at `docs/superpowers/specs/2026-08-18-gesture-controlled-knowledge-space-design.zh-CN.md`.
 
 ## Next action
 
