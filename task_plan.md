@@ -37,8 +37,8 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 |---|---|---|
 | 1. Intent and MVP freeze | complete | Scope and demo loop explicitly confirmed by user |
 | 2. Repository and runtime orientation | complete | Project path checked; no existing files detected |
-| 3. Architecture design | in_progress | User approves component boundaries and data contracts |
-| 4. File-based implementation plan | pending | Implementation tasks and verification commands are written |
+| 3. Architecture design | complete | User approved the design document and Chinese version |
+| 4. File-based implementation plan | in_progress | Implementation tasks and verification commands are written |
 | 5. Isolated worktree setup | pending | Feature work has an isolated branch/worktree |
 | 6. Incremental implementation | pending | Vertical slices for ingestion, projection, rendering, and gestures complete |
 | 7. Systematic debugging and code review | pending | Runtime issues resolved and review findings addressed |
@@ -73,3 +73,4 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 | Patch context mismatch while updating planning files | 1 | Re-read current file sections and applied smaller targeted patches |
 | Design document parent directory did not exist; sandbox directory creation was denied | 1 | Requested scoped permission, created `docs/superpowers/specs`, and retried the document write |
 | Chinese design-document patch contained an invalid hunk line | 1 | Split the document into two smaller patches and verified the resulting file |
+| PowerShell dynamic `Select-String` pattern check used an invalid positional argument | 1 | Re-ran the plan audit with literal pattern arguments and continued the self-review |
