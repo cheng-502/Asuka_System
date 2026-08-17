@@ -39,8 +39,8 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 | 2. Repository and runtime orientation | complete | Project path checked; no existing files detected |
 | 3. Architecture design | complete | User approved the design document and Chinese version |
 | 4. File-based implementation plan | in_progress | Implementation tasks and verification commands are written |
-| 5. Isolated worktree setup | pending | Feature work has an isolated branch/worktree |
-| 6. Incremental implementation | pending | Vertical slices for ingestion, projection, rendering, and gestures complete |
+| 5. Isolated worktree setup | complete | Feature work has an isolated branch/worktree |
+| 6. Incremental implementation | in_progress | Vertical slices for ingestion, projection, rendering, and gestures complete |
 | 7. Systematic debugging and code review | pending | Runtime issues resolved and review findings addressed |
 | 8. Verification before completion | pending | Acceptance demo passes with a real or representative vault |
 
