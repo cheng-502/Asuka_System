@@ -74,3 +74,4 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 | Design document parent directory did not exist; sandbox directory creation was denied | 1 | Requested scoped permission, created `docs/superpowers/specs`, and retried the document write |
 | Chinese design-document patch contained an invalid hunk line | 1 | Split the document into two smaller patches and verified the resulting file |
 | PowerShell dynamic `Select-String` pattern check used an invalid positional argument | 1 | Re-ran the plan audit with literal pattern arguments and continued the self-review |
+| GitHub publish blocked: no local origin, no accessible repositories, and `gh` CLI unavailable | 1 | Confirmed GitHub Connector identity; waiting for a repository target and/or local `gh` setup |

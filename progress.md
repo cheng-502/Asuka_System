@@ -22,6 +22,7 @@
 - Created `tasks/plan.md` and `tasks/todo.md` with ordered implementation tasks, dependencies, checkpoints, acceptance criteria, and verification commands.
 - Created isolated worktree `.worktrees/mvp1-implementation` on branch `codex/mvp1-implementation`.
 - Confirmed no implementation runtime or test configuration exists yet; dependency installation and baseline tests are pending Task 1.
+- GitHub Connector authenticated as `cheng-502`, but no accessible repositories were returned; local Git has no `origin` and `gh` CLI is unavailable, so first-version upload is blocked pending repository setup.
 
 ## Next action
 
