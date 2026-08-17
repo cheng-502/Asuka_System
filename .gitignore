@@ -1,0 +1,22 @@
+# Local worktrees
+.worktrees/
+
+# Python
+.venv/
+pipeline/.venv/
+__pycache__/
+*.py[cod]
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Local configuration and generated private data
+.env
+.env.*
+!.env.example
+data/embeddings.npy
+data/embedding-index.json
+data/knowledge-space.json
+pipeline/reports/
