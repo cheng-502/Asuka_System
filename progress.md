@@ -156,3 +156,9 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Reduced node base radius from `0.1` to `0.055` and per-link radius contribution from `0.012` to `0.006`; reduced hover/selected scale multipliers.
 - Increased UMAP `min_dist` from `0.10` to `0.25` while keeping `n_neighbors=15`, regenerated the private real artifact, and recorded both parameters in the versioned schema metadata.
 - Verification: Pipeline 30 tests passed with 1 opt-in real-model test skipped; frontend 25 tests passed; production build passed.
+
+## 2026-08-18 — Interaction HUD follow-up
+
+- Added a compact lower-right Interaction guide for Pointer, Pinch, Open Palm, No Hand, and Mouse fallback commands.
+- The guide uses text labels and action descriptions, stays clear of the upper-left camera preview and desktop detail panel, and moves to the upper-right on narrow screens to avoid the mobile detail panel.
+- Verification: frontend 26 tests passed and production build passed; the existing Three.js bundle-size warning remains the only build warning.

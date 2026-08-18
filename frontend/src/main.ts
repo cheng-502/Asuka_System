@@ -7,6 +7,7 @@ import { HandTracker } from "./hand/HandTracker";
 import { InteractionController } from "./app/InteractionController";
 import { DetailPanel } from "./ui/DetailPanel";
 import { CameraPreview } from "./ui/CameraPreview";
+import { InteractionGuide } from "./ui/InteractionGuide";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -28,6 +29,7 @@ app.innerHTML = `
     </section>
     <section id="camera-root" aria-label="Camera preview"></section>
     <aside id="detail-root" aria-label="Selected knowledge node details"></aside>
+    <aside id="guide-root" aria-label="Gesture and mouse controls"></aside>
   </main>
 `;
 
@@ -43,7 +45,9 @@ async function boot(): Promise<void> {
     const artifact = await loadArtifact(artifactPath);
     const detailRoot = document.querySelector<HTMLElement>("#detail-root");
     const cameraRoot = document.querySelector<HTMLElement>("#camera-root");
+    const guideRoot = document.querySelector<HTMLElement>("#guide-root");
     const detailPanel = detailRoot ? new DetailPanel(detailRoot, artifact) : null;
+    if (guideRoot) new InteractionGuide(guideRoot);
     const scene = new KnowledgeScene(sceneRoot, artifact, {
       onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
     });

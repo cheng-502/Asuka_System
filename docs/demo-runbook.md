@@ -64,13 +64,14 @@ The default URL without `?artifact=...` uses the checked-in two-note fixture.
 1. Confirm the full-screen 3D scene loads and the camera preview is in the upper-left.
 2. The scene should start from an angled external view centered on the node cloud. Use the mouse wheel to zoom in/out and drag to orbit/pan.
 3. Without a camera, select nodes with the mouse; the detail panel should show the title and three tabs.
-4. Click **Enable camera** and allow camera permission.
-5. Extend the index finger and move it: the screen-space Pointer should move over nodes.
-6. Hold index fingertip and thumb together for the stable pinch frames: the hovered node should select and expand its details.
-7. Open the hand: Open Palm should clear selection and collapse the detail panel.
-8. Move the hand out of frame: No Hand timeout should clear hover while mouse fallback remains available.
-9. Use **Close camera · mouse mode** to stop tracking immediately and return to mouse-only interaction.
-10. If no hand is detected for 15 seconds, the app automatically stops tracking and returns to mouse mode; the page and knowledge space remain open.
+4. Confirm the lower-right Interaction guide lists Pointer, Pinch, Open Palm, No Hand, and Mouse.
+5. Click **Enable camera** and allow camera permission.
+6. Extend the index finger and move it: the screen-space Pointer should move over nodes.
+7. Hold index fingertip and thumb together for the stable pinch frames: the hovered node should select and expand its details.
+8. Open the hand: Open Palm should clear selection and collapse the detail panel.
+9. Move the hand out of frame: No Hand timeout should clear hover while mouse fallback remains available.
+10. Use **Close camera · mouse mode** to stop tracking immediately and return to mouse-only interaction.
+11. If no hand is detected for 15 seconds, the app automatically stops tracking and returns to mouse mode; the page and knowledge space remain open.
 
 ## Troubleshooting
 

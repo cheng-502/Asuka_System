@@ -70,6 +70,66 @@ input {
   left: 1.25rem;
 }
 
+#guide-root {
+  position: absolute;
+  z-index: 2;
+  right: 1.25rem;
+  bottom: 1.25rem;
+}
+
+.interaction-guide {
+  width: min(19rem, calc(100vw - 2.5rem));
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.75rem;
+  background: rgba(9, 22, 39, 0.82);
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(0.75rem);
+}
+
+.interaction-guide-title {
+  margin: 0 0 0.65rem;
+  color: #d9fbff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.interaction-guide-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.interaction-guide-row {
+  display: grid;
+  grid-template-columns: 4.75rem 1fr;
+  gap: 0.65rem;
+  align-items: baseline;
+  color: #abc1da;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.interaction-guide-label {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.interaction-guide-detail {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.interaction-guide-detail strong {
+  color: #e8f2ff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .camera-preview {
   position: relative;
   display: grid;
@@ -247,6 +307,16 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  #guide-root {
+    top: 1rem;
+    right: 1rem;
+    bottom: auto;
+  }
+
+  .interaction-guide {
+    width: min(18rem, calc(100vw - 2rem));
+  }
+
   .status-card {
     bottom: 1rem;
     left: 1rem;
