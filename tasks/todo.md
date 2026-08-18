@@ -15,7 +15,7 @@
 
 - [x] Task 3: Implement Vault scanning and Markdown parsing
 - [x] Task 4: Add local multilingual Embedding and cache persistence (real model run deferred to Task 13)
-- [ ] Task 5: Build Wikilink and Semantic Link relationships
+- [x] Task 5: Build Wikilink and Semantic Link relationships
 - [ ] Task 6: Implement UMAP projection, Vault hash, and atomic artifact writing
 
 ### Checkpoint: Offline Pipeline

@@ -67,6 +67,15 @@
 - Task 4 verification: Python 20 tests passed, including 1 intentionally skipped opt-in real-model test; frontend Vitest 6 tests passed; `npm run build` succeeded; `sentence-transformers` is not installed in the current environment, so no model download was triggered.
 - Actual model revision/dimension capture remains an explicit real-Vault verification item for Task 13.
 
+## 2026-08-18 — Task 5
+
+- Added deterministic relationship generation in `pipeline/src/auaka_pipeline/relationships.py`.
+- Explicit Wikilinks are preserved, unresolved targets remain reportable, duplicate unresolved links are collapsed, and resolved self-links remain in the data layer for the renderer to decide how to display.
+- Semantic candidates use cosine similarity, configurable `max_neighbors`, and an optional `min_similarity`; `None` deliberately enables calibration mode without a guessed threshold.
+- Resolved pairs are canonicalized by sorted note IDs. Wikilink + Semantic Link overlap becomes one record with both types and the semantic similarity value.
+- Added similarity distribution diagnostics with count, min/max/mean, quartiles, threshold, and Top-K settings.
+- Task 5 verification: Python 24 tests passed, including 1 intentionally skipped real-embedding test; frontend Vitest 6 tests passed; `npm run build` succeeded.
+
 ## Next action
 
-Begin Task 5 in the isolated worktree: build Wikilink and thresholded Semantic Link relationship records from parsed notes and cached embeddings.
+Begin Task 6 in the isolated worktree: implement deterministic UMAP projection, Vault hashing, artifact assembly, validation, and atomic replacement.

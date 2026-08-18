@@ -184,16 +184,16 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] Wikilinks remain present even when unresolved.
-- [ ] Semantic candidates have source, target, type, and similarity.
-- [ ] Dual-type pairs are represented by one canonical record with both types.
-- [ ] Top-K candidate generation is configurable.
-- [ ] Similarity distribution is exported for later threshold calibration.
+- [x] Wikilinks remain present even when unresolved.
+- [x] Semantic candidates have source, target, type, and similarity.
+- [x] Dual-type pairs are represented by one canonical record with both types.
+- [x] Top-K candidate generation is configurable.
+- [x] Similarity distribution is exported for later threshold calibration.
 
 **Verification:**
 
-- [ ] Tests cover overlap, reverse links, unresolved links, self-links, duplicate edges, and isolated notes.
-- [ ] Fixture output matches the approved relationship policy.
+- [x] Tests cover overlap, reverse links, unresolved links, self-links, duplicate edges, and isolated notes.
+- [x] Relationship output matches the approved canonicalization and threshold policy.
 
 **Dependencies:** Tasks 3–4
 
