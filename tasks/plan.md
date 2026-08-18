@@ -137,16 +137,16 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] `.obsidian`, asset directories, templates, empty files, and configured planning files are excluded.
-- [ ] Included note IDs use normalized `/`-separated Vault-relative paths.
-- [ ] Summary extraction is deterministic and does not invoke an LLM.
-- [ ] Wikilinks preserve unresolved targets for reporting and artifact metadata.
-- [ ] The parser never writes to the Vault.
+- [x] `.obsidian`, asset directories, templates, empty files, and configured planning files are excluded.
+- [x] Included note IDs use normalized `/`-separated Vault-relative paths.
+- [x] Summary extraction is deterministic and does not invoke an LLM.
+- [x] Wikilinks preserve unresolved targets for reporting and artifact metadata.
+- [x] The parser never writes to the Vault.
 
 **Verification:**
 
-- [ ] Unit tests cover exclusions, Unicode paths, frontmatter, empty notes, summaries, valid links, and unresolved links.
-- [ ] A read-only inventory run against the real Vault reports the expected inclusion/exclusion counts without modifying files.
+- [x] Unit tests cover exclusions, Unicode paths, frontmatter, empty notes, summaries, valid links, and unresolved links.
+- [x] A read-only inventory run against the real Vault reports the expected inclusion/exclusion counts without modifying files.
 
 **Dependencies:** Tasks 1–2
 

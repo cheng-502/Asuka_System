@@ -44,6 +44,16 @@
 - Task 2 verification: Python 8 tests passed, TypeScript 6 tests passed, and `npm run build` succeeded.
 - Saved Task 2 as atomic commits `f1debb2` and `9b37775`.
 
+## 2026-08-18 — Task 3
+
+- Added deterministic Markdown parsing for frontmatter titles, headings, summaries, domains, fenced-code exclusion, and explicit Wikilinks with aliases/headings.
+- Added read-only recursive Vault scanning with normalized relative IDs, configurable exclusions, content hashes, unresolved-link reporting, and read errors.
+- Added `auaka-pipeline scan --vault ...` structured JSON reporting for included notes, exclusions, unresolved links, and errors.
+- Fixed Windows non-UTF-8 console compatibility by emitting JSON-safe ASCII escapes in the CLI report.
+- Real Vault scan result: 351 included notes, 36 excluded files, 575 unresolved Wikilinks, 0 read errors. Exclusions: 23 empty files, 7 excluded-directory files, 6 configured files.
+- Task 3 verification: Python 15 tests passed, TypeScript 6 tests passed, and `npm run build` succeeded.
+- Saved Task 3 as atomic commits `2ca8e66` and `6a3cb60`.
+
 ## Next action
 
-Begin Task 3 in the isolated worktree: implement read-only Obsidian Vault scanning and Markdown parsing.
+Begin Task 4 in the isolated worktree: add local multilingual note-level Embedding and cache persistence.
