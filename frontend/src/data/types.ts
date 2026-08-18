@@ -35,6 +35,9 @@ export interface KnowledgeSpaceArtifact {
     dimension: number;
     metric: "cosine";
     normalized: boolean;
+    revision?: string;
+    device?: string;
+    runtime_device?: string;
   };
   umap: {
     n_components: 3;

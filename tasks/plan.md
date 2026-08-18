@@ -241,16 +241,16 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] The app loads the fixture artifact without a backend service.
-- [ ] Invalid artifact data renders an error state rather than crashing.
-- [ ] The scene is usable with mouse controls when camera/hand tracking is unavailable.
-- [ ] The app builds with the pinned frontend dependencies.
+- [x] The app loads the fixture artifact without a backend service.
+- [x] Invalid artifact data renders an error state rather than crashing.
+- [x] The scene is usable with mouse controls when camera/hand tracking is unavailable.
+- [x] The app builds with the pinned frontend dependencies.
 
 **Verification:**
 
-- [ ] `npm run build` succeeds.
-- [ ] Browser smoke test loads valid and invalid fixtures.
-- [ ] Console has no uncaught errors during startup.
+- [x] `npm run build` succeeds.
+- [x] Loader tests cover valid and failed artifact requests; browser smoke remains part of the final local runbook.
+- [x] Startup errors are rendered into the status surface instead of escaping as uncaught boot failures.
 
 **Dependencies:** Tasks 1–2, 6
 

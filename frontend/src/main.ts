@@ -1,5 +1,8 @@
 import "./style.css";
 
+import { loadArtifact } from "./data/loadArtifact";
+import { KnowledgeScene } from "./scene/KnowledgeScene";
+
 const app = document.querySelector<HTMLDivElement>("#app");
 
 if (!app) {
@@ -8,17 +11,37 @@ if (!app) {
 
 app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
-    <section class="status-card">
+    <div id="scene-root" class="scene-root" aria-label="3D knowledge space"></div>
+    <section class="status-card" id="status-card" aria-live="polite">
       <p class="eyebrow">MVP-1 · GESTURE-CONTROLLED KNOWLEDGE SPACE</p>
       <h1 id="page-title">Auaka System</h1>
-      <p class="status-copy">
-        The Three.js knowledge-space renderer and local hand-tracking runtime
-        will be initialized in the next implementation tasks.
-      </p>
-      <div class="status-pill" role="status">
+      <p class="status-copy" id="status-copy">Loading the versioned knowledge-space artifact…</p>
+      <div class="status-pill" role="status" id="status-pill">
         <span class="status-dot" aria-hidden="true"></span>
-        Runtime scaffold ready
+        Loading artifact
       </div>
     </section>
   </main>
 `;
+
+const sceneRoot = document.querySelector<HTMLElement>("#scene-root");
+const statusCopy = document.querySelector<HTMLElement>("#status-copy");
+const statusPill = document.querySelector<HTMLElement>("#status-pill");
+
+async function boot(): Promise<void> {
+  if (!sceneRoot || !statusCopy || !statusPill) return;
+
+  try {
+    const artifact = await loadArtifact();
+    new KnowledgeScene(sceneRoot, artifact);
+    statusCopy.textContent = `${artifact.nodes.length} notes loaded from the versioned artifact. Mouse orbit is available while hand tracking is offline.`;
+    statusPill.classList.add("is-ready");
+    statusPill.lastChild!.textContent = " Knowledge space ready";
+  } catch (error) {
+    statusCopy.textContent = error instanceof Error ? error.message : "Could not load the knowledge-space artifact.";
+    statusPill.classList.add("is-error");
+    statusPill.lastChild!.textContent = " Artifact unavailable";
+  }
+}
+
+void boot();
