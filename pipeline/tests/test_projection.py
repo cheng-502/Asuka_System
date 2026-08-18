@@ -15,6 +15,13 @@ from auaka_pipeline.projection import UmapConfig, project_embeddings  # noqa: E4
 
 
 class ProjectionTest(unittest.TestCase):
+    def test_default_umap_spacing_is_recorded_in_artifact_metadata(self) -> None:
+        config = UmapConfig()
+
+        self.assertEqual(config.n_neighbors, 15)
+        self.assertEqual(config.min_dist, 0.25)
+        self.assertEqual(config.artifact_metadata()["min_dist"], 0.25)
+
     def test_umap_projection_is_three_dimensional_and_deterministic(self) -> None:
         vectors = np.asarray(
             [

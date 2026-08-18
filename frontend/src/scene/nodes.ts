@@ -4,6 +4,9 @@ import type { KnowledgeSpaceArtifact, KnowledgeSpaceNode } from "../data/types";
 export type NodeMesh = THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>;
 
 const DOMAIN_COLORS = [0x67e8f9, 0x5eead4, 0xfcd34d, 0xfda4af, 0xc4b5fd, 0x93c5fd];
+const NODE_BASE_RADIUS = 0.055;
+const NODE_LINK_RADIUS = 0.006;
+const NODE_MAX_LINKS = 12;
 
 export function domainColor(domain: string): number {
   let hash = 0;
@@ -24,8 +27,12 @@ export function createNodeMeshes(
   return meshes;
 }
 
+export function nodeRadius(explicitLinkCount: number): number {
+  return NODE_BASE_RADIUS + Math.min(Math.max(explicitLinkCount, 0), NODE_MAX_LINKS) * NODE_LINK_RADIUS;
+}
+
 function createNodeMesh(node: KnowledgeSpaceNode): NodeMesh {
-  const radius = 0.1 + Math.min(node.explicit_link_count, 12) * 0.012;
+  const radius = nodeRadius(node.explicit_link_count);
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(radius, 20, 14),
     new THREE.MeshStandardMaterial({
@@ -45,7 +52,7 @@ function createNodeMesh(node: KnowledgeSpaceNode): NodeMesh {
 export function setNodeState(mesh: NodeMesh, state: "idle" | "hover" | "selected"): void {
   const material = mesh.material;
   const baseScale = Number(mesh.userData.baseScale ?? 1);
-  const scale = state === "selected" ? 1.65 : state === "hover" ? 1.3 : baseScale;
+  const scale = state === "selected" ? 1.45 : state === "hover" ? 1.18 : baseScale;
   mesh.scale.setScalar(scale);
   material.emissiveIntensity = state === "selected" ? 1.1 : state === "hover" ? 0.65 : 0.28;
 }

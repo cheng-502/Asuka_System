@@ -150,3 +150,9 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Explicitly enabled OrbitControls zoom, set a bounded but generous min/max distance, and tuned zoom/pan speed so the full space can be inspected and enlarged.
 - Reduced the lower-left status card to a compact approximately half-size layout; the upper-left camera preview remains unchanged.
 - Verification: 24 frontend tests passed and `npm run build` passed; the only build message is the existing Three.js chunk-size warning.
+
+## 2026-08-18 — Node density/readability calibration
+
+- Reduced node base radius from `0.1` to `0.055` and per-link radius contribution from `0.012` to `0.006`; reduced hover/selected scale multipliers.
+- Increased UMAP `min_dist` from `0.10` to `0.25` while keeping `n_neighbors=15`, regenerated the private real artifact, and recorded both parameters in the versioned schema metadata.
+- Verification: Pipeline 30 tests passed with 1 opt-in real-model test skipped; frontend 25 tests passed; production build passed.

@@ -19,7 +19,7 @@ class UmapConfig:
     random_state: int = 42
     metric: str = "cosine"
     n_neighbors: int = 15
-    min_dist: float = 0.1
+    min_dist: float = 0.25
 
     def __post_init__(self) -> None:
         if self.n_components != 3:
@@ -36,6 +36,8 @@ class UmapConfig:
             "n_components": self.n_components,
             "random_state": self.random_state,
             "metric": self.metric,
+            "n_neighbors": self.n_neighbors,
+            "min_dist": self.min_dist,
         }
 
 

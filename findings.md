@@ -137,3 +137,9 @@ The final differentiator is a knowledge space that can eventually be changed by 
 - The full pairwise diagnostic contained 61,425 unique similarities: min `0.177512`, p25 `0.383474`, median `0.424516`, p75 `0.468180`, mean `0.435337`, max `1.0`.
 - Threshold decision: use `min_similarity=0.60` together with `max_neighbors=5`. Candidate counts were 1,331 semantic records at `0.50`, 1,055 at `0.55`, 649 at `0.60`, 383 at `0.65`, and 271 at `0.70`; `0.60` selects the high-similarity tail without making the graph too sparse.
 - The generated real artifact is kept at ignored path `data/knowledge-space.real.json`; high-dimensional vectors and model cache are also ignored. No Vault files are written by the Pipeline.
+
+## 2026-08-18 — Spatial readability calibration
+
+- Node visual radius is intentionally independent from semantic distance. It now uses `0.055 + min(explicit_link_count, 12) * 0.006`, with smaller hover/selected multipliers, so link count remains visible without making dense clusters merge visually.
+- UMAP `n_neighbors=15` remains unchanged for the current local/global balance. `min_dist` increased from `0.10` to `0.25` to create more separation among nearby nodes; this changes persisted 3D coordinates and therefore required regenerating the real artifact.
+- The updated real artifact keeps the same 351 notes, source hash, embedding model and semantic threshold, while recording `n_neighbors=15` and `min_dist=0.25` in its UMAP metadata.

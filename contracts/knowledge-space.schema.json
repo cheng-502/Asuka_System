@@ -62,11 +62,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["n_components", "random_state", "metric"],
-      "properties": {
-        "n_components": { "const": 3 },
-        "random_state": { "type": "integer" },
-        "metric": { "const": "cosine" }
-      }
+        "properties": {
+          "n_components": { "const": 3 },
+          "random_state": { "type": "integer" },
+          "metric": { "const": "cosine" },
+          "n_neighbors": { "type": "integer", "minimum": 1 },
+          "min_dist": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
     },
     "source": {
       "type": "object",

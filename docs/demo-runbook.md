@@ -36,7 +36,7 @@ python -m auaka_pipeline.cli generate `
   --min-similarity 0.60
 ```
 
-Expected real-run summary: 351 notes, 575 unresolved Wikilinks, 1,426 total link records, 649 semantic records, UMAP `random_state=42`, and source hash `74ecb5820ea2c09b69e0fe9ae435f3f86ad0dc433cddd8821f6791da031d036c`.
+Expected real-run summary: 351 notes, 575 unresolved Wikilinks, 1,426 total link records, 649 semantic records, UMAP `random_state=42`, `n_neighbors=15`, `min_dist=0.25`, and source hash `74ecb5820ea2c09b69e0fe9ae435f3f86ad0dc433cddd8821f6791da031d036c`.
 
 To expose the private artifact to the local browser without replacing the checked-in fixture:
 
@@ -79,6 +79,7 @@ The default URL without `?artifact=...` uses the checked-in two-note fixture.
 - Mouse mode: camera tracking never disables Three.js OrbitControls; use **Close camera · mouse mode** when you want to stop hand pointer events explicitly.
 - Initial view: the scene computes its external camera target and distance from persisted node coordinates; reloading the same artifact does not recompute UMAP.
 - Too many semantic edges: regenerate with a higher threshold; the first calibrated value is `0.60`.
+- Nodes too close: `min_dist` controls UMAP's minimum local separation; the current readability calibration is `0.25`. Node radius is a separate renderer setting.
 - Nodes moved unexpectedly: compare the artifact `source.vault_hash`, embedding revision, and UMAP metadata before regenerating.
 - Private data: do not commit `data/embeddings/`, `pipeline/data/model-cache/`, or `data/knowledge-space.real.json`.
 
