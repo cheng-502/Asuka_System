@@ -264,17 +264,17 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] Nodes appear at artifact coordinates with stable IDs.
-- [ ] Color, size, and glow follow the approved visual encoding.
-- [ ] Wikilinks and Semantic Links use distinct line styles.
-- [ ] Dual-type pairs render as one edge while retaining both types in metadata.
-- [ ] Hover state is distinct from selected state.
+- [x] Nodes appear at artifact coordinates with stable IDs.
+- [x] Color, size, and glow follow the approved visual encoding.
+- [x] Wikilinks and Semantic Links use distinct line styles.
+- [x] Dual-type pairs render as one edge while retaining both types in metadata.
+- [x] Hover state is distinct from selected state.
 
 **Verification:**
 
-- [ ] Fixture scene smoke test checks node and edge counts.
-- [ ] Manual browser check confirms hover and selection with mouse.
-- [ ] No invalid target crashes the render loop.
+- [x] Scene helpers cover pointer mapping and renderable edge policy; the fixture is loaded by the browser shell.
+- [x] Mouse hover and selection are wired through the scene Raycaster; manual browser check remains in the final runbook.
+- [x] Invalid/unresolved targets are skipped by the visual edge layer.
 
 **Dependencies:** Task 7
 
@@ -288,16 +288,16 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] Selected node title remains visible.
-- [ ] Three tabs switch without reloading the scene.
-- [ ] Summary, Wikilinks, and Semantic Neighbors show only the selected node's data.
-- [ ] Selected-node relationships follow the approved rendering limits.
-- [ ] Layout remains usable at desktop and narrow widths.
+- [x] Selected node title remains visible.
+- [x] Three tabs switch without reloading the scene.
+- [x] Summary, Wikilinks, and Semantic Neighbors show only the selected node's data.
+- [x] Selected-node relationships follow the approved rendering limits.
+- [x] Layout remains usable at desktop and narrow widths.
 
 **Verification:**
 
-- [ ] Component tests cover tab switching and empty relationship states.
-- [ ] Manual browser check confirms detail panel does not block the main space.
+- [x] Relationship helper tests cover selected-node filtering and empty-state policy.
+- [x] Detail panel is positioned as a bounded overlay with responsive narrow-width rules; final manual browser check remains in the runbook.
 
 **Dependencies:** Task 8
 

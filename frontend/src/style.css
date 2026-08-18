@@ -114,6 +114,78 @@ h1 {
   color: #fecdd3;
 }
 
+.detail-panel {
+  position: absolute;
+  z-index: 3;
+  top: 2rem;
+  right: 2rem;
+  width: min(24rem, calc(100vw - 4rem));
+  min-height: 12rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1rem;
+  background: rgba(9, 22, 39, 0.88);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(1rem);
+}
+
+.detail-title {
+  margin: 0;
+  color: #f8fbff;
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
+}
+
+.detail-id {
+  overflow: hidden;
+  margin: 0.35rem 0 1rem;
+  color: #8fa8c4;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  margin: 0 -0.15rem 0.85rem;
+  padding: 0.15rem;
+}
+
+.detail-tab {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  color: #9bb1c9;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.detail-tab:hover,
+.detail-tab:focus-visible,
+.detail-tab.is-active {
+  border-color: rgba(103, 232, 249, 0.4);
+  color: #d9fbff;
+  background: rgba(103, 232, 249, 0.1);
+  outline: none;
+}
+
+.detail-content {
+  color: #c5d5e7;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.detail-content ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
 @media (max-width: 640px) {
   .status-card {
     top: 1rem;
@@ -121,6 +193,15 @@ h1 {
     right: 1rem;
     width: auto;
     padding: 1.25rem;
+  }
+
+  .detail-panel {
+    top: auto;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+    min-height: 0;
   }
 
   .status-card h1 {

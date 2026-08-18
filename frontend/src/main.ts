@@ -2,6 +2,7 @@ import "./style.css";
 
 import { loadArtifact } from "./data/loadArtifact";
 import { KnowledgeScene } from "./scene/KnowledgeScene";
+import { DetailPanel } from "./ui/DetailPanel";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -21,6 +22,7 @@ app.innerHTML = `
         Loading artifact
       </div>
     </section>
+    <aside id="detail-root" aria-label="Selected knowledge node details"></aside>
   </main>
 `;
 
@@ -33,7 +35,11 @@ async function boot(): Promise<void> {
 
   try {
     const artifact = await loadArtifact();
-    new KnowledgeScene(sceneRoot, artifact);
+    const detailRoot = document.querySelector<HTMLElement>("#detail-root");
+    const detailPanel = detailRoot ? new DetailPanel(detailRoot, artifact) : null;
+    new KnowledgeScene(sceneRoot, artifact, {
+      onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
+    });
     statusCopy.textContent = `${artifact.nodes.length} notes loaded from the versioned artifact. Mouse orbit is available while hand tracking is offline.`;
     statusPill.classList.add("is-ready");
     statusPill.lastChild!.textContent = " Knowledge space ready";

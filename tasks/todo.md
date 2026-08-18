@@ -28,8 +28,8 @@
 ## Phase 3 — Static Browser Knowledge Space
 
 - [x] Task 7: Build artifact loader and Three.js scene shell
-- [ ] Task 8: Render nodes, relationship edges, hover, and selection
-- [ ] Task 9: Add selected-node detail panel and relationship tabs
+- [x] Task 8: Render nodes, relationship edges, hover, and selection
+- [x] Task 9: Add selected-node detail panel and relationship tabs
 
 ### Checkpoint: Static Space
 

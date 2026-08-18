@@ -99,4 +99,14 @@ Begin Task 7 in the isolated worktree: build the artifact loader and full-screen
 
 ## Next action
 
-Begin Task 8 in the isolated worktree: render nodes and relationship edges with hover, selection, and dual line styles.
+## 2026-08-18 — Tasks 8–9
+
+- Added artifact-coordinate node meshes with deterministic domain colors, link-count sizing, hover scaling, and selected glow.
+- Added relationship edge rendering: solid Wikilinks, dashed pure Semantic Links, one solid visual edge for dual-type records, and visual filtering for unresolved/self links.
+- Added screen-space mouse Raycaster hover and click selection; the same scene exposes `selectNode` and `clearSelection` for later gesture integration.
+- Added selected-node detail panel with persistent title and Summary, Wikilinks, and Semantic Neighbors tabs. Semantic details are capped at five and unresolved Wikilinks remain visible.
+- Added responsive overlay styling and helper tests. Frontend verification: 12 Vitest tests passed and `npm run build` succeeded; Vite reports only the expected Three.js bundle-size warning.
+
+## Next action
+
+Begin Task 10 in the isolated worktree: add the local Hand Landmarker asset and upper-left camera preview/status surface.
