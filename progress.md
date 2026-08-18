@@ -143,3 +143,10 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Auto exit and manual **Close camera · mouse mode** share the same lifecycle: stop requestAnimationFrame, stop MediaStream tracks, close the Hand Landmarker, reset gesture state, clear hand hover, and keep the Three.js scene open.
 - Mouse OrbitControls and mouse selection remain available while the camera is active; the explicit close action stops hand pointer events when mouse-only interaction is preferred.
 - Added regression coverage for Auto Exit timing/retrigger behavior, tracker cleanup, interaction routing, and the preview close control. Frontend verification: 22 Vitest tests passed.
+
+## 2026-08-18 — Camera framing and compact status card follow-up
+
+- Replaced the fixed `(0, 0, 8)` camera framing with a persisted-node-bound calculation: the camera targets the knowledge cloud center and starts from a diagonal external view.
+- Explicitly enabled OrbitControls zoom, set a bounded but generous min/max distance, and tuned zoom/pan speed so the full space can be inspected and enlarged.
+- Reduced the lower-left status card to a compact approximately half-size layout; the upper-left camera preview remains unchanged.
+- Verification: 24 frontend tests passed and `npm run build` passed; the only build message is the existing Three.js chunk-size warning.

@@ -53,12 +53,12 @@ input {
   z-index: 2;
   bottom: 2rem;
   left: 2rem;
-  width: min(100%, 42rem);
-  padding: clamp(2rem, 7vw, 4rem);
+  width: min(100%, 24rem);
+  padding: 1.25rem 1.5rem;
   border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 1.5rem;
+  border-radius: 1rem;
   background: rgba(15, 29, 49, 0.78);
-  box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(1rem);
   pointer-events: none;
 }
@@ -124,42 +124,42 @@ input {
 }
 
 .eyebrow {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   color: #7dd3fc;
-  font-size: 0.72rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(2.75rem, 9vw, 5rem);
+  font-size: clamp(2rem, 5vw, 3rem);
   letter-spacing: -0.06em;
 }
 
 .status-copy {
-  max-width: 32rem;
-  margin: 1.5rem 0 0;
+  max-width: 20rem;
+  margin: 0.65rem 0 0;
   color: #abc1da;
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 2rem;
-  padding: 0.65rem 0.9rem;
+  margin-top: 1rem;
+  padding: 0.45rem 0.65rem;
   border: 1px solid rgba(45, 212, 191, 0.35);
   border-radius: 999px;
   color: #99f6e4;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
 }
 
 .status-dot {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.45rem;
+  height: 0.45rem;
   border-radius: 50%;
   background: #2dd4bf;
   box-shadow: 0 0 1rem #2dd4bf;

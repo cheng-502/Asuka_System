@@ -4,6 +4,7 @@ import type { KnowledgeSpaceArtifact } from "../data/types";
 import { createRelationshipEdges } from "./edges";
 import { createNodeMeshes, setNodeState, type NodeMesh } from "./nodes";
 import { normalizedPointerToNdc, pickNode } from "./raycast";
+import { calculateCameraFrame } from "./cameraFrame";
 
 export class KnowledgeScene {
   readonly scene = new THREE.Scene();
@@ -39,10 +40,25 @@ export class KnowledgeScene {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.target.set(0, 0, 0);
+    this.controls.enableZoom = true;
+    this.controls.zoomSpeed = 1.25;
+    this.controls.panSpeed = 0.8;
     this.scene.add(this.nodeGroup, this.edgeGroup);
     this.nodeMeshes = createNodeMeshes(artifact, this.nodeGroup);
     createRelationshipEdges(artifact, this.nodeMeshes, this.edgeGroup);
+    const frame = calculateCameraFrame(
+      Array.from(this.nodeMeshes.values(), (mesh) => mesh.position),
+      this.camera.fov,
+    );
+    const viewDirection = new THREE.Vector3(0.72, 0.42, 1).normalize();
+    this.camera.position.copy(frame.center).addScaledVector(viewDirection, frame.distance);
+    this.camera.near = frame.near;
+    this.camera.far = frame.far;
+    this.camera.updateProjectionMatrix();
+    this.controls.target.copy(frame.center);
+    this.controls.minDistance = frame.minDistance;
+    this.controls.maxDistance = frame.maxDistance;
+    this.controls.update();
     this.scene.add(new THREE.AmbientLight(0x9cc8ff, 1.8));
     const keyLight = new THREE.PointLight(0x8bdcff, 30, 30);
     keyLight.position.set(3, 4, 6);
