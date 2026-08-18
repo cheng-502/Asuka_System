@@ -162,3 +162,10 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added a compact lower-right Interaction guide for Pointer, Pinch, Open Palm, No Hand, and Mouse fallback commands.
 - The guide uses text labels and action descriptions, stays clear of the upper-left camera preview and desktop detail panel, and moves to the upper-right on narrow screens to avoid the mobile detail panel.
 - Verification: frontend 26 tests passed and production build passed; the existing Three.js bundle-size warning remains the only build warning.
+
+## 2026-08-18 — Two-hand spatial gestures
+
+- MediaPipe Hand Landmarker now requests up to two hands and forwards all normalized landmark sets.
+- Added thresholded incremental `zoom` and `rotate` GestureEvents: two open-hand index-fingertip distance controls dolly zoom, and the line angle controls orbit rotation.
+- OrbitControls remains available for mouse input, and hand result ordering is canonicalized by fingertip x-position to prevent false 180-degree rotations.
+- Updated the Interaction guide and demo runbook with the two-hand commands.

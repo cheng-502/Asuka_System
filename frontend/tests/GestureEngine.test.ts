@@ -5,6 +5,16 @@ function landmarks(overrides: Partial<Record<number, Partial<HandLandmark>>> = {
   return Array.from({ length: 21 }, (_, index) => ({ x: 0.2 + index * 0.005, y: 0.7, ...overrides[index] }));
 }
 
+function openPalm(indexX: number, indexY = 0.2): HandLandmark[] {
+  return landmarks({
+    8: { x: indexX, y: indexY }, 6: { x: indexX, y: indexY + 0.3 },
+    12: { x: indexX, y: indexY }, 10: { x: indexX, y: indexY + 0.3 },
+    16: { x: indexX, y: indexY }, 14: { x: indexX, y: indexY + 0.3 },
+    20: { x: indexX, y: indexY }, 18: { x: indexX, y: indexY + 0.3 },
+    4: { x: indexX + 0.1, y: 0.8 },
+  });
+}
+
 describe("GestureEngine", () => {
   it("emits a smoothed screen-space Pointer", () => {
     const engine = new GestureEngine({ pointerSmoothing: 0.5 });
@@ -57,5 +67,34 @@ describe("GestureEngine", () => {
     expect(engine.update(landmarks(), 20_001).map((event) => event.type)).toEqual(["pointer"]);
     expect(engine.update(null, 20_002)).toEqual([]);
     expect(engine.update(null, 20_102)).toEqual([{ type: "no_hand" }]);
+  });
+
+  it("emits incremental zoom deltas when two open palms move apart or together", () => {
+    const engine = new GestureEngine({ twoHandChangeThreshold: 0.01 });
+    expect(engine.update([openPalm(0.25), openPalm(0.75)]).map((event) => event.type)).toEqual([]);
+
+    const apart = engine.update([openPalm(0.15), openPalm(0.85)]);
+    expect(apart[0].type).toBe("zoom");
+    expect((apart[0] as { type: "zoom"; delta: number }).delta).toBeGreaterThan(0);
+
+    const together = engine.update([openPalm(0.3), openPalm(0.7)]);
+    expect(together[0].type).toBe("zoom");
+    expect((together[0] as { type: "zoom"; delta: number }).delta).toBeLessThan(0);
+  });
+
+  it("emits an incremental rotate delta from the two-index-finger angle", () => {
+    const engine = new GestureEngine({ twoHandRotationThreshold: 0.02, twoHandChangeThreshold: 0.2 });
+    engine.update([openPalm(0.25, 0.5), openPalm(0.75, 0.5)]);
+
+    const events = engine.update([openPalm(0.25, 0.5), openPalm(0.75, 0.7)]);
+    expect(events[0].type).toBe("rotate");
+    expect((events[0] as { type: "rotate"; delta: number }).delta).toBeGreaterThan(0);
+  });
+
+  it("keeps two-hand tracking stable when MediaPipe changes hand result order", () => {
+    const engine = new GestureEngine({ twoHandChangeThreshold: 0.2, twoHandRotationThreshold: 0.02 });
+    engine.update([openPalm(0.25), openPalm(0.75)]);
+
+    expect(engine.update([openPalm(0.75), openPalm(0.25)])).toEqual([]);
   });
 });

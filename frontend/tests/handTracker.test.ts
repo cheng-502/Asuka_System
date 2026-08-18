@@ -1,16 +1,31 @@
 import { describe, expect, it, vi } from "vitest";
-import { HandTracker, DEFAULT_HAND_MODEL_PATH, DEFAULT_WASM_PATH, firstHandLandmarks } from "../src/hand/HandTracker";
+import { HandTracker, DEFAULT_HAND_MODEL_PATH, DEFAULT_WASM_PATH, MAX_HANDS, firstHandLandmarks } from "../src/hand/HandTracker";
 
 describe("local Hand Landmarker adapter", () => {
   it("uses versioned local model and WASM paths", () => {
     expect(DEFAULT_HAND_MODEL_PATH).toBe("/models/hand_landmarker.task");
     expect(DEFAULT_WASM_PATH).toBe("/wasm");
+    expect(MAX_HANDS).toBe(2);
   });
 
   it("normalizes the first MediaPipe hand result", () => {
     const result = firstHandLandmarks({ landmarks: [[{ x: 0.2, y: 0.3, z: -0.1 }]] } as never);
 
-    expect(result).toEqual([{ x: 0.2, y: 0.3, z: -0.1 }]);
+    expect(result).toEqual([[{ x: 0.2, y: 0.3, z: -0.1 }]]);
+  });
+
+  it("normalizes all detected hands for two-hand gestures", () => {
+    const result = firstHandLandmarks({
+      landmarks: [
+        [{ x: 0.2, y: 0.3, z: -0.1 }],
+        [{ x: 0.8, y: 0.3, z: -0.2 }],
+      ],
+    } as never);
+
+    expect(result).toEqual([
+      [{ x: 0.2, y: 0.3, z: -0.1 }],
+      [{ x: 0.8, y: 0.3, z: -0.2 }],
+    ]);
   });
 
   it("stops camera tracks, detaches the video, and closes the landmarker", () => {

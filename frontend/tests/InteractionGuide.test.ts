@@ -7,6 +7,8 @@ describe("interaction guide", () => {
       "Pointer",
       "Pinch",
       "Open Palm",
+      "Zoom",
+      "Rotate",
       "No Hand",
       "Mouse",
     ]);

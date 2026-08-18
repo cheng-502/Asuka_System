@@ -69,15 +69,18 @@ The default URL without `?artifact=...` uses the checked-in two-note fixture.
 6. Extend the index finger and move it: the screen-space Pointer should move over nodes.
 7. Hold index fingertip and thumb together for the stable pinch frames: the hovered node should select and expand its details.
 8. Open the hand: Open Palm should clear selection and collapse the detail panel.
-9. Move the hand out of frame: No Hand timeout should clear hover while mouse fallback remains available.
-10. Use **Close camera · mouse mode** to stop tracking immediately and return to mouse-only interaction.
-11. If no hand is detected for 15 seconds, the app automatically stops tracking and returns to mouse mode; the page and knowledge space remain open.
+9. Put both hands in an open-palm pose: move the index fingertips apart to zoom in and together to zoom out.
+10. Twist the line between the two index fingertips to orbit-rotate the knowledge space.
+11. Move the hand out of frame: No Hand timeout should clear hover while mouse fallback remains available.
+12. Use **Close camera · mouse mode** to stop tracking immediately and return to mouse-only interaction.
+13. If no hand is detected for 15 seconds, the app automatically stops tracking and returns to mouse mode; the page and knowledge space remain open.
 
 ## Troubleshooting
 
 - Model/WASM failure: confirm `/models/hand_landmarker.task` and `/wasm/` return HTTP 200 from Vite.
 - Camera denied/unavailable: use mouse fallback; browser permission can be reset for `127.0.0.1`.
 - Mouse mode: camera tracking never disables Three.js OrbitControls; use **Close camera · mouse mode** when you want to stop hand pointer events explicitly.
+- Two-hand gestures: both hands must be open; fingertip distance controls zoom and the angle between fingertips controls orbit rotation.
 - Initial view: the scene computes its external camera target and distance from persisted node coordinates; reloading the same artifact does not recompute UMAP.
 - Too many semantic edges: regenerate with a higher threshold; the first calibrated value is `0.60`.
 - Nodes too close: `min_dist` controls UMAP's minimum local separation; the current readability calibration is `0.25`. Node radius is a separate renderer setting.

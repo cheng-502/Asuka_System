@@ -101,6 +101,20 @@ export class KnowledgeScene {
     this.updateHoveredNode(null);
   }
 
+  zoomBy(delta: number): void {
+    if (delta === 0) return;
+    const dollyScale = 1 + Math.min(Math.abs(delta) * 4, 0.16);
+    if (delta > 0) this.controls.dollyIn(dollyScale);
+    else this.controls.dollyOut(dollyScale);
+    this.controls.update();
+  }
+
+  rotateBy(delta: number): void {
+    if (delta === 0) return;
+    this.controls.rotateLeft(delta * 1.5);
+    this.controls.update();
+  }
+
   setPointer(normalizedX: number, normalizedY: number): void {
     this.updateHoveredNode(
       pickNode(

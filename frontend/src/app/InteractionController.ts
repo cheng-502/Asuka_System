@@ -5,6 +5,8 @@ export interface GestureInteractionTarget {
   selectAtPointer(x: number, y: number): void;
   clearSelection(): void;
   clearHover(): void;
+  zoomBy(delta: number): void;
+  rotateBy(delta: number): void;
 }
 
 export class InteractionController {
@@ -34,5 +36,7 @@ export class InteractionController {
       this.target.clearHover();
       this.onExit?.();
     }
+    if (event.type === "zoom") this.target.zoomBy(event.delta);
+    if (event.type === "rotate") this.target.rotateBy(event.delta);
   }
 }

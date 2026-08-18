@@ -3,15 +3,16 @@ import {
   HandLandmarker,
   type HandLandmarkerResult,
 } from "@mediapipe/tasks-vision";
-import type { HandLandmark } from "./GestureEngine";
+import type { HandLandmark, HandLandmarks } from "./GestureEngine";
 
 export const DEFAULT_HAND_MODEL_PATH = "/models/hand_landmarker.task";
 export const DEFAULT_WASM_PATH = "/wasm";
+export const MAX_HANDS = 2;
 
 export interface HandTrackerOptions {
   modelPath?: string;
   wasmPath?: string;
-  onLandmarks: (landmarks: HandLandmark[] | null) => void;
+  onLandmarks: (landmarks: HandLandmarks[] | null) => void;
   onStatus?: (message: string) => void;
 }
 
@@ -40,7 +41,7 @@ export class HandTracker {
       this.landmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: { modelAssetPath: this.options.modelPath },
         runningMode: "VIDEO",
-        numHands: 1,
+        numHands: MAX_HANDS,
         minHandDetectionConfidence: 0.6,
         minHandPresenceConfidence: 0.6,
         minTrackingConfidence: 0.6,
@@ -83,7 +84,7 @@ export class HandTracker {
   };
 }
 
-export function firstHandLandmarks(result: HandLandmarkerResult): HandLandmark[] | null {
-  const landmarks = result.landmarks[0];
-  return landmarks?.map(({ x, y, z }) => ({ x, y, z })) ?? null;
+export function firstHandLandmarks(result: HandLandmarkerResult): HandLandmarks[] | null {
+  if (!result.landmarks.length) return null;
+  return result.landmarks.map((landmarks) => landmarks.map(({ x, y, z }) => ({ x, y, z })));
 }
