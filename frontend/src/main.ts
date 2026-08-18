@@ -72,6 +72,7 @@ async function boot(): Promise<void> {
       : null;
     tracker = new HandTracker({
       onLandmarks: (landmarks) => {
+        cameraPreview?.setLandmarks(landmarks);
         for (const event of gestureEngine.update(landmarks)) interaction.handle(event);
       },
       onStatus: (message) => cameraPreview?.setStatus(message),

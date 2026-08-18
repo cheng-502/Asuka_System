@@ -152,3 +152,10 @@ The final differentiator is a knowledge space that can eventually be changed by 
 - Node visual radius is intentionally independent from semantic distance. It now uses `0.055 + min(explicit_link_count, 12) * 0.006`, with smaller hover/selected multipliers, so link count remains visible without making dense clusters merge visually.
 - UMAP `n_neighbors=15` remains unchanged for the current local/global balance. `min_dist` increased from `0.10` to `0.25` to create more separation among nearby nodes; this changes persisted 3D coordinates and therefore required regenerating the real artifact.
 - The updated real artifact keeps the same 351 notes, source hash, embedding model and semantic threshold, while recording `n_neighbors=15` and `min_dist=0.25` in its UMAP metadata.
+
+## 2026-08-18 — Camera landmark overlay debugging
+
+- The existing HandTracker already preserves all valid MediaPipe hands and keeps `numHands=2` with a `0.6` detection threshold; the missing visual feedback was caused by CameraPreview having no landmark rendering surface.
+- The overlay uses a transparent Canvas with normalized MediaPipe coordinates. Video and Canvas are mirrored independently with CSS, so the preview remains natural for the user without mutating tracker coordinates used by GestureEngine.
+- Every tracker frame now updates both CameraPreview and GestureEngine. Invalid or empty frames clear the Canvas and report the current detected-hand count, making camera permission/model failures distinguishable from gesture recognition issues.
+- Camera hardware remains an environment-dependent manual check; automated tests cover one-hand forwarding, 21-point drawing, two-hand color separation, empty-frame clearing, and lifecycle cleanup.

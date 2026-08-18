@@ -74,6 +74,23 @@
 - Verification: new Python tests 11 passed; existing non-UMAP Python tests 34 passed; frontend Vitest 30 passed; TypeScript check passed; Vite build passed to a writable temporary output directory.
 - Remaining environment note: the pre-existing UMAP deterministic test enters a long Numba/UMAP compilation path in this Windows worktree; it was isolated and stopped after extended runtime. Direct default Vite output also reports `EPERM` because the worktree protects `node_modules/.vite-temp` and `dist`, while the same build succeeds with `--configLoader runner --outDir` to a writable temporary directory.
 
+## 2026-08-18 — Camera overlay follow-up planning
+
+- User reported that single-hand tracking was not usable and the camera preview showed no MediaPipe landmarks.
+- Context inspection confirmed the preview currently contains only a mirrored `<video>`; no Canvas/SVG overlay exists.
+- The confirmed design keeps the mirrored preview, `numHands=2`, and all three Hand Landmarker confidence thresholds at `0.6`.
+- Planned implementation: pure Canvas landmark renderer, CameraPreview lifecycle/status integration, and main-loop forwarding to both GestureEngine and the overlay.
+
+## 2026-08-18 — Camera landmark overlay implementation complete
+
+- Added `frontend/src/hand/landmarkOverlay.ts` with MediaPipe 21-point and five-chain Canvas rendering, cyan/amber hand colors, and thumb/index fingertip highlighting.
+- Added a mirrored transparent Canvas layer to `CameraPreview`, synchronized to the actual video dimensions when available.
+- Camera status now reports `Hands detected: 0/1/2`; empty frames, camera stop, and startup failure clear stale landmarks.
+- Forwarded every HandTracker frame to both the overlay and GestureEngine, preserving `numHands=2` and the requested `0.6` confidence thresholds.
+- Added one-hand, two-hand, empty-frame, color, lifecycle, and full-landmark adapter tests.
+- Verification: Vitest 35 tests passed, TypeScript check passed, Vite build passed to a writable temporary output, and local Vite/model/WASM HTTP smoke checks returned 200.
+- Manual hardware check remains: enable camera, place one hand in view, verify visible cyan skeleton and `Hands detected: 1`, then test two hands, no hand, and camera close.
+
 ## 2026-08-18 — Task 4
 
 - Added `EmbeddingConfig` with multilingual model, expected dimension, cosine metric, normalization, requested device, revision field, and model-cache path.
@@ -187,3 +204,10 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added thresholded incremental `zoom` and `rotate` GestureEvents: two open-hand index-fingertip distance controls dolly zoom, and the line angle controls orbit rotation.
 - OrbitControls remains available for mouse input, and hand result ordering is canonicalized by fingertip x-position to prevent false 180-degree rotations.
 - Updated the Interaction guide and demo runbook with the two-hand commands.
+
+## 2026-08-18 — Camera overlay final verification
+
+- Code review covered correctness, readability, architecture, security, and per-frame rendering cost; no blocking findings remain.
+- Final frontend verification: 35 Vitest tests passed across 12 files, `npx tsc --noEmit` passed, `git diff --check` passed, and the production Vite build passed with only the existing Three.js chunk-size warning.
+- The preview preserves mirrored video, shows normalized MediaPipe landmarks in a transparent Canvas, reports the valid hand count, and clears the overlay when tracking stops or returns to mouse mode.
+- Manual acceptance remains: enable the camera, confirm one hand shows 21 connected points and `Hands detected: 1`, then click **Close camera · mouse mode** and confirm mouse orbit/selection continue working.

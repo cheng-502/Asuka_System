@@ -63,3 +63,15 @@
 - [x] Systematic debugging findings are resolved or documented
 - [x] Code review is complete
 - [x] Verification checklist is complete with camera hardware limitation documented
+
+## Phase 6 — Camera landmark overlay follow-up
+
+- [x] Task 15: Add pure MediaPipe landmark overlay drawing
+- [x] Task 16: Integrate the overlay and detection status into CameraPreview
+- [x] Task 17: Wire HandTracker frames and verify single-hand runtime path
+
+### Checkpoint: Camera debugging surface complete
+
+- [x] Single-hand landmarks and detection count are visible
+- [x] Two-hand colors and no-hand clearing work
+- [x] Camera close returns to mouse mode

@@ -150,7 +150,20 @@ input {
   background: #0b1b2e;
 }
 
+.camera-landmarks {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
 .camera-status {
+  position: relative;
+  z-index: 2;
   padding: 0.45rem 0.6rem 0.2rem;
   color: #b6cde4;
   font-size: 0.7rem;
@@ -158,6 +171,8 @@ input {
 
 .camera-enable,
 .camera-close {
+  position: relative;
+  z-index: 2;
   margin: 0.35rem 0.6rem 0.6rem;
   padding: 0.4rem 0.55rem;
   border: 1px solid rgba(103, 232, 249, 0.4);

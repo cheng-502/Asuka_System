@@ -28,6 +28,20 @@ describe("local Hand Landmarker adapter", () => {
     ]);
   });
 
+  it("preserves one complete hand for the gesture and overlay consumers", () => {
+    const landmarks = Array.from({ length: 21 }, (_, index) => ({
+      x: index / 20,
+      y: 0.5,
+      z: -0.1,
+    }));
+
+    const result = firstHandLandmarks({ landmarks: [landmarks] } as never);
+
+    expect(result).toHaveLength(1);
+    expect(result?.[0]).toHaveLength(21);
+    expect(result?.[0]?.[8]).toEqual({ x: 0.4, y: 0.5, z: -0.1 });
+  });
+
   it("stops camera tracks, detaches the video, and closes the landmarker", () => {
     const cancelAnimationFrame = vi.fn();
     vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrame);

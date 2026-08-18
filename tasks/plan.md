@@ -462,6 +462,71 @@ Systematic debugging + review + final verification
 | 387-note scene becomes visually dense | Medium | Focused relationship rendering, low-opacity unselected edges, max five semantic links on focused node |
 | Real Vault contains unexpected Markdown syntax | Medium | Skip/report malformed notes; fixture tests for parser edge cases; no Vault mutation |
 
+## Camera Overlay Follow-up Plan — 2026-08-18
+
+### Task 15: Add pure MediaPipe landmark overlay drawing
+
+**Description:** Add a focused Canvas drawing helper that renders 21 landmarks, five finger chains, and fingertip emphasis using normalized coordinates. Keep the helper independent from camera permissions and GestureEngine state.
+
+**Acceptance criteria:**
+
+- [x] One or two valid hands render at their normalized positions.
+- [x] The overlay uses distinct colors for the first and second hand.
+- [x] Empty input clears the drawing without throwing.
+
+**Verification:**
+
+- [x] Vitest tests use a fake Canvas 2D context and synthetic 21-point landmarks.
+
+**Dependencies:** MVP-1 Task 10
+
+**Files likely touched:** `frontend/src/hand/landmarkOverlay.ts`, `frontend/tests/landmarkOverlay.test.ts`
+
+### Task 16: Integrate the overlay and detection status into CameraPreview
+
+**Description:** Layer a mirrored transparent Canvas over the existing mirrored video, expose `setLandmarks`, and display the detected hand count. Clear the overlay on null frames, camera stop, and failed startup.
+
+**Acceptance criteria:**
+
+- [x] Canvas aligns with the 4:3 video preview and has `pointer-events: none`.
+- [x] One-hand frames visibly update the overlay and status reports `Hands detected: 1`.
+- [x] Null frames clear the overlay and report `Hands detected: 0`.
+- [x] Existing enable/close controls remain usable.
+
+**Verification:**
+
+- [x] CameraPreview tests cover one-hand update, empty-frame clearing, and lifecycle cleanup.
+
+**Dependencies:** Task 15
+
+**Files likely touched:** `frontend/src/ui/CameraPreview.ts`, `frontend/src/style.css`, `frontend/tests/CameraPreview.test.ts`
+
+### Task 17: Wire HandTracker frames and verify single-hand runtime path
+
+**Description:** Forward every normalized HandTracker frame to both GestureEngine and CameraPreview without changing gesture semantics. Preserve the requested `numHands=2` and `0.6` thresholds, then run browser smoke verification.
+
+**Acceptance criteria:**
+
+- [x] HandTracker preserves one valid hand and two valid hands from MediaPipe results.
+- [x] Main runtime updates overlay and GestureEngine from the same frame.
+- [x] Stopping camera clears the overlay and returns to mouse mode.
+
+**Verification:**
+
+- [x] Existing HandTracker/GestureEngine tests pass.
+- [x] Vitest, TypeScript, Vite build, and local page/model/WASM HTTP smoke pass; camera hardware remains a manual check.
+
+**Dependencies:** Task 16
+
+**Files likely touched:** `frontend/src/main.ts`, `frontend/src/hand/HandTracker.ts`, `frontend/tests/handTracker.test.ts`
+
+### Checkpoint: Camera debugging surface complete
+
+- [x] Single hand produces visible landmarks and `Hands detected: 1`.
+- [x] Two hands use separate overlay colors.
+- [x] No Hand clears the overlay.
+- [x] Mouse fallback and camera close still work.
+
 ## Open Questions to Resolve During Implementation
 
 - Exact pinned revisions for the multilingual embedding model, Python dependencies, npm dependencies, and Hand Landmarker asset.
