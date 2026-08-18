@@ -81,6 +81,26 @@ export class KnowledgeScene {
     this.onSelect?.(null);
   }
 
+  clearHover(): void {
+    this.updateHoveredNode(null);
+  }
+
+  setPointer(normalizedX: number, normalizedY: number): void {
+    this.updateHoveredNode(
+      pickNode(
+        this.camera,
+        normalizedPointerToNdc(normalizedX, normalizedY),
+        this.nodeMeshes,
+        this.raycaster,
+      ),
+    );
+  }
+
+  selectAtPointer(normalizedX: number, normalizedY: number): void {
+    this.setPointer(normalizedX, normalizedY);
+    this.selectNode(this.hoveredNodeId);
+  }
+
   selectNode(nodeId: string | null): void {
     this.applySelectedState(nodeId);
     this.onSelect?.(nodeId);
@@ -108,7 +128,7 @@ export class KnowledgeScene {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const y = (event.clientY - rect.top) / rect.height;
-    this.updateHoveredNode(pickNode(this.camera, normalizedPointerToNdc(x, y), this.nodeMeshes, this.raycaster));
+    this.setPointer(x, y);
   };
 
   private readonly handlePointerLeave = (): void => this.updateHoveredNode(null);

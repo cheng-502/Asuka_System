@@ -110,3 +110,15 @@ Begin Task 7 in the isolated worktree: build the artifact loader and full-screen
 ## Next action
 
 Begin Task 10 in the isolated worktree: add the local Hand Landmarker asset and upper-left camera preview/status surface.
+
+## 2026-08-18 — Tasks 10–12
+
+- Added the pinned local `frontend/public/models/hand_landmarker.task` asset (SHA-256 `FBC2A30080C3C557093B5DDFC334698132EB341044CCEE322CCF8BCF3607CDE1`) and copied MediaPipe Tasks Vision WASM runtime files into `frontend/public/wasm` for offline loading.
+- Added `HandTracker` with local model/WASM paths, user-triggered camera permission, graceful failure status, and normalized landmark delivery.
+- Added pure `GestureEngine` events: smoothed screen-space Pointer, stable Pinch with release-before-retrigger, stable Open Palm, and timeout-based No Hand.
+- Added `InteractionController` so mouse and hand events share the same Three.js state transitions. Pointer uses normalized screen-space Raycaster mapping; Pinch selects; Open Palm clears selection/detail; No Hand clears hover.
+- Frontend verification: 19 Vitest tests passed and `npm run build` succeeded. The build reports the expected Three.js bundle-size warning; camera hardware permissions remain a manual environment check.
+
+## Next action
+
+Begin Task 13 in the isolated worktree: run the complete Pipeline on the real 351-note Vault, install/use the selected multilingual model, inspect similarity distribution, calibrate threshold, and generate the real artifact.

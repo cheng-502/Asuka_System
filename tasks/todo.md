@@ -40,9 +40,9 @@
 
 ## Phase 4 — Hand Tracking and Gesture Interaction
 
-- [ ] Task 10: Add pinned local Hand Landmarker asset and camera preview
-- [ ] Task 11: Implement the pure Gesture Engine
-- [ ] Task 12: Integrate Pointer/Raycaster events and complete the gesture demo loop
+- [x] Task 10: Add pinned local Hand Landmarker asset and camera preview
+- [x] Task 11: Implement the pure Gesture Engine
+- [x] Task 12: Integrate Pointer/Raycaster events and complete the gesture demo loop
 
 ### Checkpoint: Gesture Integration
 
