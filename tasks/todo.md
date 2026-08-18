@@ -2,14 +2,14 @@
 
 ## Phase 1 — Foundation
 
-- [ ] Task 1: Bootstrap the dual-runtime project
+- [x] Task 1: Bootstrap the dual-runtime project
 - [ ] Task 2: Define and validate the shared knowledge-space contract
 
 ### Checkpoint: Foundation
 
-- [ ] Python and frontend install/build successfully
+- [x] Python and frontend install/build successfully
 - [ ] Shared fixture validates in both runtimes
-- [ ] No private Vault data or generated vectors are staged
+- [x] No private Vault data or generated vectors are staged
 
 ## Phase 2 — Offline Knowledge Pipeline
 

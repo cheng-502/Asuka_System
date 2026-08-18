@@ -83,17 +83,17 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] `pipeline` has an installable Python project and a runnable CLI entry point.
-- [ ] `frontend` starts with Vite and TypeScript.
-- [ ] `contracts`, `data`, and test directories exist.
-- [ ] Real Vault paths and model paths are configuration values, not hard-coded in business logic.
-- [ ] Generated vectors, local caches, environment files, and build output are ignored by Git.
+- [x] `pipeline` has an installable Python project and a runnable CLI entry point.
+- [x] `frontend` starts with Vite and TypeScript.
+- [x] `contracts`, `data`, and test directories exist.
+- [x] Real Vault paths and model paths are configuration values, not hard-coded in business logic.
+- [x] Generated vectors, local caches, environment files, and build output are ignored by Git.
 
 **Verification:**
 
-- [ ] Python environment installs from `pipeline/pyproject.toml`.
-- [ ] Frontend starts and builds with `npm run build`.
-- [ ] Placeholder Pipeline command exits successfully.
+- [x] Python environment installs from `pipeline/pyproject.toml`.
+- [x] Frontend starts and builds with `npm run build`.
+- [x] Placeholder Pipeline command exits successfully.
 
 **Dependencies:** None
 

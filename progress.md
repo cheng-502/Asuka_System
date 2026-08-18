@@ -22,8 +22,18 @@
 - Created `tasks/plan.md` and `tasks/todo.md` with ordered implementation tasks, dependencies, checkpoints, acceptance criteria, and verification commands.
 - Created isolated worktree `.worktrees/mvp1-implementation` on branch `codex/mvp1-implementation`.
 - Confirmed no implementation runtime or test configuration exists yet; dependency installation and baseline tests are pending Task 1.
-- GitHub Connector authenticated as `cheng-502`, but no accessible repositories were returned; local Git has no `origin` and `gh` CLI is unavailable, so first-version upload is blocked pending repository setup.
+- Started Task 1 with the CLI acceptance test in the isolated worktree.
+- GitHub repository `https://github.com/cheng-502/Asuka_System.git` is configured as `origin`; the MVP-1 branch is pushed, while draft PR creation through the connector previously returned an internal error.
+
+## 2026-08-18
+
+- Completed Task 1: bootstrapped the installable Python Pipeline package, environment-based runtime paths, and placeholder CLI.
+- Verified Pipeline tests: 2 tests passed; editable install from `pipeline/pyproject.toml` passed in `pipeline/.venv`; `auaka-pipeline` exited successfully.
+- Completed the Vite/TypeScript frontend scaffold, public model directory, shared contract/data/test directories, environment examples, and root setup README.
+- Verified frontend with `npm run build`; Vite resolved to `8.2.1` and the build completed successfully.
+- Verified the dev server in an authorized environment: `http://127.0.0.1:5173/` returned HTTP 200 and contained the Auaka entry page. Chrome DevTools MCP is not configured, so DOM/console inspection remains pending.
+- Saved Task 1 as atomic commits `f6377f4` and `067c077`; the earlier conversation summary remains in commit `2532b31`.
 
 ## Next action
 
-Begin Task 1 in the isolated worktree: bootstrap the Python Pipeline and Vite/TypeScript frontend runtimes.
+Begin Task 2 in the isolated worktree: define and validate the shared `knowledge-space.json` contract.
