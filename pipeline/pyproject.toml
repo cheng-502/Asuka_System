@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auaka-knowledge-pipeline"
+version = "0.1.0"
+description = "Offline knowledge-space pipeline for Auaka System"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+auaka-pipeline = "auaka_pipeline.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
