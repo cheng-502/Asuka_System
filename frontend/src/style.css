@@ -96,7 +96,8 @@ input {
   font-size: 0.7rem;
 }
 
-.camera-enable {
+.camera-enable,
+.camera-close {
   margin: 0.35rem 0.6rem 0.6rem;
   padding: 0.4rem 0.55rem;
   border: 1px solid rgba(103, 232, 249, 0.4);
@@ -107,8 +108,17 @@ input {
   font-size: 0.72rem;
 }
 
+.camera-close {
+  margin-top: 0;
+  border-color: rgba(251, 113, 133, 0.42);
+  color: #ffe4e6;
+  background: rgba(251, 113, 133, 0.08);
+}
+
 .camera-enable:hover,
-.camera-enable:focus-visible {
+.camera-enable:focus-visible,
+.camera-close:hover,
+.camera-close:focus-visible {
   background: rgba(103, 232, 249, 0.2);
   outline: none;
 }

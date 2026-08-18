@@ -21,6 +21,7 @@ export class HandTracker {
   private stream: MediaStream | null = null;
   private animationFrame = 0;
   private video: HTMLVideoElement | null = null;
+  private running = false;
 
   constructor(options: HandTrackerOptions) {
     this.options = {
@@ -31,30 +32,38 @@ export class HandTracker {
   }
 
   async start(video: HTMLVideoElement): Promise<void> {
+    this.stop();
     this.video = video;
-    this.options.onStatus?.("Loading local Hand Landmarker…");
-    const vision = await FilesetResolver.forVisionTasks(this.options.wasmPath);
-    this.landmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: this.options.modelPath },
-      runningMode: "VIDEO",
-      numHands: 1,
-      minHandDetectionConfidence: 0.6,
-      minHandPresenceConfidence: 0.6,
-      minTrackingConfidence: 0.6,
-    });
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-    video.srcObject = this.stream;
-    video.muted = true;
-    video.playsInline = true;
-    await video.play();
-    this.options.onStatus?.("Hand tracking ready");
-    this.tick();
+    try {
+      this.options.onStatus?.("Loading local Hand Landmarker…");
+      const vision = await FilesetResolver.forVisionTasks(this.options.wasmPath);
+      this.landmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: this.options.modelPath },
+        runningMode: "VIDEO",
+        numHands: 1,
+        minHandDetectionConfidence: 0.6,
+        minHandPresenceConfidence: 0.6,
+        minTrackingConfidence: 0.6,
+      });
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      video.srcObject = this.stream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+      this.running = true;
+      this.options.onStatus?.("Hand tracking ready");
+      this.tick();
+    } catch (error) {
+      this.stop();
+      throw error;
+    }
   }
 
   stop(): void {
+    this.running = false;
     cancelAnimationFrame(this.animationFrame);
     this.stream?.getTracks().forEach((track) => track.stop());
     this.stream = null;
@@ -65,12 +74,12 @@ export class HandTracker {
   }
 
   private readonly tick = (): void => {
-    if (!this.video || !this.landmarker) return;
+    if (!this.running || !this.video || !this.landmarker) return;
     if (this.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
       const result = this.landmarker.detectForVideo(this.video, performance.now());
       this.options.onLandmarks(firstHandLandmarks(result));
     }
-    this.animationFrame = requestAnimationFrame(this.tick);
+    if (this.running) this.animationFrame = requestAnimationFrame(this.tick);
   };
 }
 

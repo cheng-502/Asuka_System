@@ -47,30 +47,45 @@ async function boot(): Promise<void> {
     const scene = new KnowledgeScene(sceneRoot, artifact, {
       onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
     });
+    const gestureEngine = new GestureEngine();
+    let cameraPreview: CameraPreview | null = null;
+    let tracker: HandTracker | null = null;
+
+    function stopCamera(): void {
+      tracker?.stop();
+      gestureEngine.reset();
+      scene.clearHover();
+      cameraPreview?.setIdle();
+      cameraPreview?.setStatus("Camera off · mouse mode");
+    }
+
     const interaction = new InteractionController(scene, {
       onCollapse: () => detailPanel?.setSelectedNode(null),
+      onExit: stopCamera,
     });
-    const gestureEngine = new GestureEngine();
-    const cameraPreview = cameraRoot ? new CameraPreview(cameraRoot, () => void startCamera()) : null;
-    const tracker = new HandTracker({
+    cameraPreview = cameraRoot
+      ? new CameraPreview(cameraRoot, () => void startCamera(), stopCamera)
+      : null;
+    tracker = new HandTracker({
       onLandmarks: (landmarks) => {
         for (const event of gestureEngine.update(landmarks)) interaction.handle(event);
-        if (!landmarks) detailPanel?.setSelectedNode(null);
       },
       onStatus: (message) => cameraPreview?.setStatus(message),
     });
 
     async function startCamera(): Promise<void> {
       if (!cameraPreview) return;
-      cameraPreview.setEnabled(false);
+      cameraPreview.setStarting();
+      gestureEngine.reset();
       try {
-        await tracker.start(cameraPreview.video);
+        await tracker?.start(cameraPreview.video);
+        cameraPreview.setActive(true);
       } catch (error) {
         cameraPreview.setStatus(error instanceof Error ? error.message : "Camera unavailable");
-        cameraPreview.setEnabled(true);
+        cameraPreview.setIdle();
       }
     }
-    window.addEventListener("beforeunload", () => tracker.stop());
+    window.addEventListener("beforeunload", () => tracker?.stop());
     statusCopy.textContent = `${artifact.nodes.length} notes loaded from the versioned artifact. Mouse orbit is available while hand tracking is offline.`;
     statusPill.classList.add("is-ready");
     statusPill.lastChild!.textContent = " Knowledge space ready";

@@ -68,11 +68,14 @@ The default URL without `?artifact=...` uses the checked-in two-note fixture.
 5. Hold index fingertip and thumb together for the stable pinch frames: the hovered node should select and expand its details.
 6. Open the hand: Open Palm should clear selection and collapse the detail panel.
 7. Move the hand out of frame: No Hand timeout should clear hover while mouse fallback remains available.
+8. Use **Close camera · mouse mode** to stop tracking immediately and return to mouse-only interaction.
+9. If no hand is detected for 15 seconds, the app automatically stops tracking and returns to mouse mode; the page and knowledge space remain open.
 
 ## Troubleshooting
 
 - Model/WASM failure: confirm `/models/hand_landmarker.task` and `/wasm/` return HTTP 200 from Vite.
 - Camera denied/unavailable: use mouse fallback; browser permission can be reset for `127.0.0.1`.
+- Mouse mode: camera tracking never disables Three.js OrbitControls; use **Close camera · mouse mode** when you want to stop hand pointer events explicitly.
 - Too many semantic edges: regenerate with a higher threshold; the first calibrated value is `0.60`.
 - Nodes moved unexpectedly: compare the artifact `source.vault_hash`, embedding revision, and UMAP metadata before regenerating.
 - Private data: do not commit `data/embeddings/`, `pipeline/data/model-cache/`, or `data/knowledge-space.real.json`.

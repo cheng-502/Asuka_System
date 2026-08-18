@@ -9,16 +9,19 @@ describe("InteractionController", () => {
       clearSelection: vi.fn(),
       clearHover: vi.fn(),
     };
-    const controller = new InteractionController(target);
+    const onExit = vi.fn();
+    const controller = new InteractionController(target, { onExit });
 
     controller.handle({ type: "pointer", x: 0.2, y: 0.3 });
     controller.handle({ type: "pinch", x: 0.2, y: 0.3 });
     controller.handle({ type: "open_palm" });
     controller.handle({ type: "no_hand" });
+    controller.handle({ type: "auto_exit" });
 
     expect(target.setPointer).toHaveBeenCalledWith(0.2, 0.3);
     expect(target.selectAtPointer).toHaveBeenCalledWith(0.2, 0.3);
     expect(target.clearSelection).toHaveBeenCalledTimes(1);
-    expect(target.clearHover).toHaveBeenCalledTimes(2);
+    expect(target.clearHover).toHaveBeenCalledTimes(3);
+    expect(onExit).toHaveBeenCalledTimes(1);
   });
 });

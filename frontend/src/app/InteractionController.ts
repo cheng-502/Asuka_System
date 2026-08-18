@@ -10,10 +10,15 @@ export interface GestureInteractionTarget {
 export class InteractionController {
   private readonly target: GestureInteractionTarget;
   private readonly onCollapse?: () => void;
+  private readonly onExit?: () => void;
 
-  constructor(target: GestureInteractionTarget, callbacks: { onCollapse?: () => void } = {}) {
+  constructor(
+    target: GestureInteractionTarget,
+    callbacks: { onCollapse?: () => void; onExit?: () => void } = {},
+  ) {
     this.target = target;
     this.onCollapse = callbacks.onCollapse;
+    this.onExit = callbacks.onExit;
   }
 
   handle(event: GestureEvent): void {
@@ -25,5 +30,9 @@ export class InteractionController {
       this.onCollapse?.();
     }
     if (event.type === "no_hand") this.target.clearHover();
+    if (event.type === "auto_exit") {
+      this.target.clearHover();
+      this.onExit?.();
+    }
   }
 }

@@ -8,7 +8,8 @@ export type GestureEvent =
   | { type: "pointer"; x: number; y: number }
   | { type: "pinch"; x: number; y: number }
   | { type: "open_palm" }
-  | { type: "no_hand" };
+  | { type: "no_hand" }
+  | { type: "auto_exit" };
 
 export interface GestureConfig {
   pointerSmoothing: number;
@@ -16,6 +17,7 @@ export interface GestureConfig {
   pinchStableFrames: number;
   openPalmStableFrames: number;
   noHandTimeoutFrames: number;
+  autoExitTimeoutMs: number;
 }
 
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
@@ -24,6 +26,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   pinchStableFrames: 3,
   openPalmStableFrames: 3,
   noHandTimeoutFrames: 8,
+  autoExitTimeoutMs: 15_000,
 };
 
 export class GestureEngine {
@@ -35,15 +38,19 @@ export class GestureEngine {
   private openPalmActive = false;
   private noHandFrames = 0;
   private noHandActive = false;
+  private noHandSince: number | null = null;
+  private autoExitActive = false;
 
   constructor(config: Partial<GestureConfig> = {}) {
     this.config = { ...DEFAULT_GESTURE_CONFIG, ...config };
   }
 
-  update(landmarks: readonly HandLandmark[] | null): GestureEvent[] {
-    if (!landmarks || landmarks.length < 21) return this.handleNoHand();
+  update(landmarks: readonly HandLandmark[] | null, timestamp = performance.now()): GestureEvent[] {
+    if (!landmarks || landmarks.length < 21) return this.handleNoHand(timestamp);
     this.noHandFrames = 0;
     this.noHandActive = false;
+    this.noHandSince = null;
+    this.autoExitActive = false;
     const pointer = this.smoothPointer(landmarks[8]);
     const events: GestureEvent[] = [{ type: "pointer", ...pointer }];
     const pinching = distance(landmarks[4], landmarks[8]) <= this.config.pinchDistance;
@@ -83,6 +90,8 @@ export class GestureEngine {
     this.openPalmActive = false;
     this.noHandFrames = 0;
     this.noHandActive = false;
+    this.noHandSince = null;
+    this.autoExitActive = false;
   }
 
   private smoothPointer(indexTip: HandLandmark): { x: number; y: number } {
@@ -99,17 +108,27 @@ export class GestureEngine {
     return this.smoothedPointer;
   }
 
-  private handleNoHand(): GestureEvent[] {
+  private handleNoHand(timestamp = performance.now()): GestureEvent[] {
+    if (this.noHandSince === null) this.noHandSince = timestamp;
     this.pinchFrames = 0;
     this.pinchActive = false;
     this.openPalmFrames = 0;
     this.openPalmActive = false;
     this.noHandFrames += 1;
+    const events: GestureEvent[] = [];
     if (!this.noHandActive && this.noHandFrames >= this.config.noHandTimeoutFrames) {
       this.noHandActive = true;
-      return [{ type: "no_hand" }];
+      events.push({ type: "no_hand" });
     }
-    return [];
+    if (
+      !this.autoExitActive &&
+      this.noHandSince !== null &&
+      timestamp - this.noHandSince >= this.config.autoExitTimeoutMs
+    ) {
+      this.autoExitActive = true;
+      events.push({ type: "auto_exit" });
+    }
+    return events;
   }
 }
 

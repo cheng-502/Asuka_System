@@ -46,4 +46,16 @@ describe("GestureEngine", () => {
     expect(engine.update(null)).toEqual([{ type: "no_hand" }]);
     expect(engine.update(null)).toEqual([]);
   });
+
+  it("emits Auto Exit once after a long no-hand interval and resets when a hand returns", () => {
+    const engine = new GestureEngine({ noHandTimeoutFrames: 2, autoExitTimeoutMs: 15_000 });
+    expect(engine.update(null, 0)).toEqual([]);
+    expect(engine.update(null, 100)).toEqual([{ type: "no_hand" }]);
+    expect(engine.update(null, 14_999)).toEqual([]);
+    expect(engine.update(null, 15_000)).toEqual([{ type: "auto_exit" }]);
+    expect(engine.update(null, 20_000)).toEqual([]);
+    expect(engine.update(landmarks(), 20_001).map((event) => event.type)).toEqual(["pointer"]);
+    expect(engine.update(null, 20_002)).toEqual([]);
+    expect(engine.update(null, 20_102)).toEqual([{ type: "no_hand" }]);
+  });
 });

@@ -136,3 +136,10 @@ Begin Task 13 in the isolated worktree: run the complete Pipeline on the real 35
 ## MVP-1 completion note
 
 The requested MVP-1 implementation is complete in the isolated worktree and GitHub branch. The only non-automated item is granting camera permission and physically performing the hand demo on the user's machine; the code path, local assets, fallback behavior, tests, runbook, and real artifact generation are all present.
+
+## 2026-08-18 — Camera exit and mouse fallback follow-up
+
+- Added a time-based `auto_exit` event after 15 seconds without a detected hand.
+- Auto exit and manual **Close camera · mouse mode** share the same lifecycle: stop requestAnimationFrame, stop MediaStream tracks, close the Hand Landmarker, reset gesture state, clear hand hover, and keep the Three.js scene open.
+- Mouse OrbitControls and mouse selection remain available while the camera is active; the explicit close action stops hand pointer events when mouse-only interaction is preferred.
+- Added regression coverage for Auto Exit timing/retrigger behavior, tracker cleanup, interaction routing, and the preview close control. Frontend verification: 22 Vitest tests passed.
