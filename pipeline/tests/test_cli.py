@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -42,6 +44,32 @@ class CliTest(unittest.TestCase):
             config.hand_model_path,
             Path("frontend/public/models/hand_landmarker.task"),
         )
+
+    def test_scan_command_prints_structured_read_only_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            vault = Path(temporary_dir)
+            (vault / "note.md").write_text("# Note\n\nContent.", encoding="utf-8")
+            output = io.StringIO()
+
+            with redirect_stdout(output):
+                exit_code = main(["scan", "--vault", str(vault)])
+
+        report = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["included_count"], 1)
+        self.assertEqual(report["excluded_count"], 0)
+        self.assertEqual(report["unresolved_link_count"], 0)
+
+    def test_scan_report_is_safe_for_non_utf8_console_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            vault = Path(temporary_dir)
+            (vault / "emoji.md").write_text("# 知识 ⭐\n\nContent.", encoding="utf-8")
+            output = io.StringIO()
+
+            with redirect_stdout(output):
+                main(["scan", "--vault", str(vault)])
+
+        self.assertTrue(output.getvalue().isascii())
 
 
 if __name__ == "__main__":
