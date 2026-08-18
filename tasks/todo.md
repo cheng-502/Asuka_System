@@ -14,7 +14,7 @@
 ## Phase 2 — Offline Knowledge Pipeline
 
 - [x] Task 3: Implement Vault scanning and Markdown parsing
-- [ ] Task 4: Add local multilingual Embedding and cache persistence
+- [x] Task 4: Add local multilingual Embedding and cache persistence (real model run deferred to Task 13)
 - [ ] Task 5: Build Wikilink and Semantic Link relationships
 - [ ] Task 6: Implement UMAP projection, Vault hash, and atomic artifact writing
 

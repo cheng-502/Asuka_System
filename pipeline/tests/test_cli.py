@@ -34,6 +34,10 @@ class CliTest(unittest.TestCase):
             {
                 "AUAKA_VAULT_PATH": "C:/vault",
                 "AUAKA_HAND_MODEL_PATH": "frontend/public/models/hand_landmarker.task",
+                "AUAKA_EMBEDDING_MODEL": "fake-multilingual",
+                "AUAKA_EMBEDDING_DIMENSION": "3",
+                "AUAKA_EMBEDDING_DEVICE": "cpu",
+                "AUAKA_MODEL_CACHE_PATH": "data/test-model-cache",
             },
             clear=False,
         ):
@@ -44,6 +48,11 @@ class CliTest(unittest.TestCase):
             config.hand_model_path,
             Path("frontend/public/models/hand_landmarker.task"),
         )
+        self.assertEqual(config.embedding_model, "fake-multilingual")
+        self.assertEqual(config.embedding_dimension, 3)
+        self.assertEqual(config.embedding_device, "cpu")
+        self.assertEqual(config.embedding_cache_path, Path("data/test-model-cache"))
+        self.assertEqual(config.embedding_config.metric, "cosine")
 
     def test_scan_command_prints_structured_read_only_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_dir:

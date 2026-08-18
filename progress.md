@@ -56,4 +56,17 @@
 
 ## Next action
 
-Begin Task 4 in the isolated worktree: add local multilingual note-level Embedding and cache persistence.
+## 2026-08-18 — Task 4
+
+- Added `EmbeddingConfig` with multilingual model, expected dimension, cosine metric, normalization, requested device, revision field, and model-cache path.
+- Added a local `SentenceTransformerEmbedder` adapter using a persistent `cache_folder`, plus process-level model reuse.
+- Added note-level embedding generation from title and deterministic summary; vectors are validated, converted to `float32`, and normalized before downstream use.
+- Added cache persistence as `embeddings.npy` plus `embedding-index.json`, including note IDs, content hashes, shape, model metadata, and runtime device. These files remain outside `knowledge-space.json`.
+- Added the `目标检测` ↔ `object detection` cosine-similarity sanity check and an opt-in real-model integration test.
+- Added deterministic fake-embedder tests for normalization, row mapping, cache round-trip, cross-language checking, and failure behavior.
+- Task 4 verification: Python 20 tests passed, including 1 intentionally skipped opt-in real-model test; frontend Vitest 6 tests passed; `npm run build` succeeded; `sentence-transformers` is not installed in the current environment, so no model download was triggered.
+- Actual model revision/dimension capture remains an explicit real-Vault verification item for Task 13.
+
+## Next action
+
+Begin Task 5 in the isolated worktree: build Wikilink and thresholded Semantic Link relationship records from parsed notes and cached embeddings.

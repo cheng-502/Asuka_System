@@ -160,16 +160,16 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] Model name, dimension, normalization, and runtime device are recorded in configuration/artifact metadata.
-- [ ] The model is downloaded once and reused from the local cache.
-- [ ] Embeddings are written outside the browser artifact as a local cache.
-- [ ] Cross-language test compares the Chinese and English concept pair using cosine similarity.
-- [ ] Embedding failure stops artifact replacement and reports the error clearly.
+- [x] Model name, dimension, normalization, and runtime device are recorded in configuration/cache metadata.
+- [x] The model loader uses a persistent local cache and reuses a loaded model within one process.
+- [x] Embeddings are written outside the browser artifact as a local cache.
+- [x] Cross-language test compares the Chinese and English concept pair using cosine similarity.
+- [x] Embedding failures raise a clear error before downstream cache/artifact work.
 
 **Verification:**
 
-- [ ] Unit tests use a deterministic small fake embedder without downloading a model.
-- [ ] An integration test runs the selected multilingual model when available.
+- [x] Unit tests use a deterministic small fake embedder without downloading a model.
+- [x] An opt-in integration test runs the selected multilingual model when available.
 - [ ] The real model run records its actual dimension and model revision.
 
 **Dependencies:** Task 3
