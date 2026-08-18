@@ -107,15 +107,15 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] Schema covers version, generated time, pipeline, embedding, UMAP, source, nodes, and links.
-- [ ] Python and TypeScript reject malformed artifacts at their respective boundaries.
-- [ ] The fixture demonstrates both separate and merged relationship types.
-- [ ] Note IDs, coordinates, similarities, and optional unresolved metadata have explicit types.
+- [x] Schema covers version, generated time, pipeline, embedding, UMAP, source, nodes, and links.
+- [x] Python and TypeScript reject malformed artifacts at their respective boundaries.
+- [x] The fixture demonstrates both separate and merged relationship types.
+- [x] Note IDs, coordinates, similarities, and optional unresolved metadata have explicit types.
 
 **Verification:**
 
-- [ ] Valid fixture passes Python and TypeScript validation.
-- [ ] Invalid fixture tests fail for missing required metadata, invalid coordinates, and unknown relation targets where required.
+- [x] Valid fixture passes Python and TypeScript validation.
+- [x] Invalid fixture tests fail for missing required metadata, invalid coordinates, and unknown relation targets where required.
 
 **Dependencies:** Task 1
 

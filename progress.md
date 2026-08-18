@@ -34,6 +34,16 @@
 - Verified the dev server in an authorized environment: `http://127.0.0.1:5173/` returned HTTP 200 and contained the Auaka entry page. Chrome DevTools MCP is not configured, so DOM/console inspection remains pending.
 - Saved Task 1 as atomic commits `f6377f4` and `067c077`; the earlier conversation summary remains in commit `2532b31`.
 
+## 2026-08-18 — Task 2
+
+- Added canonical JSON Schema Draft 2020-12 at `contracts/knowledge-space.schema.json`.
+- Added shared fixture with note metadata, 3D coordinates, a merged Wikilink + Semantic Link, and an unresolved Wikilink.
+- Added Python `KnowledgeSpaceArtifact` typing and boundary validation with cross-record relation-target checks.
+- Added TypeScript artifact types and Ajv 2020-12 validation with the same relation-target checks.
+- Added Python and Vitest tests for valid artifacts, missing metadata, invalid coordinates, unknown targets, optional unresolved metadata, and the shared fixture.
+- Task 2 verification: Python 8 tests passed, TypeScript 6 tests passed, and `npm run build` succeeded.
+- Saved Task 2 as atomic commits `f1debb2` and `9b37775`.
+
 ## Next action
 
-Begin Task 2 in the isolated worktree: define and validate the shared `knowledge-space.json` contract.
+Begin Task 3 in the isolated worktree: implement read-only Obsidian Vault scanning and Markdown parsing.
