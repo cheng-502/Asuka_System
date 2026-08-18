@@ -76,6 +76,15 @@
 - Added similarity distribution diagnostics with count, min/max/mean, quartiles, threshold, and Top-K settings.
 - Task 5 verification: Python 24 tests passed, including 1 intentionally skipped real-embedding test; frontend Vitest 6 tests passed; `npm run build` succeeded.
 
+## 2026-08-18 — Task 6
+
+- Added deterministic UMAP 3D projection with `n_components=3`, `random_state=42`, cosine metric, and deterministic two-note/one-note edge handling.
+- Added canonical included-note hashing from Vault-relative IDs and content hashes.
+- Added versioned artifact assembly with node metadata, relationship records, embedding/runtime metadata, UMAP metadata, source hash, and note count.
+- Added schema validation before atomic artifact replacement; failed validation leaves the previous artifact unchanged.
+- Extended the shared embedding schema with optional revision, requested device, and runtime device metadata.
+- Added `umap-learn` as a Pipeline dependency. Task 6 verification: Python 28 tests passed, including 1 intentionally skipped real-embedding test.
+
 ## Next action
 
-Begin Task 6 in the isolated worktree: implement deterministic UMAP projection, Vault hashing, artifact assembly, validation, and atomic replacement.
+Begin Task 7 in the isolated worktree: build the artifact loader and full-screen Three.js scene shell.

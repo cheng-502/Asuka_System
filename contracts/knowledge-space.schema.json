@@ -52,7 +52,10 @@
         "model": { "$ref": "#/$defs/nonEmptyString" },
         "dimension": { "type": "integer", "minimum": 1 },
         "metric": { "const": "cosine" },
-        "normalized": { "type": "boolean" }
+        "normalized": { "type": "boolean" },
+        "revision": { "type": "string" },
+        "device": { "type": "string" },
+        "runtime_device": { "type": "string" }
       }
     },
     "umap": {

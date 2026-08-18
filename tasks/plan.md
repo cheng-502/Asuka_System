@@ -207,18 +207,18 @@ Systematic debugging + review + final verification
 
 **Acceptance criteria:**
 
-- [ ] UMAP uses `n_components=3` and `random_state=42` by default.
-- [ ] Artifact records pipeline version, embedding metadata, UMAP metadata, source hash, and note count.
-- [ ] Same input/configuration produces reproducible coordinates within the accepted numeric tolerance.
-- [ ] Failed runs do not overwrite the last valid artifact.
-- [ ] Artifact schema validation runs before final write.
+- [x] UMAP uses `n_components=3` and `random_state=42` by default.
+- [x] Artifact records pipeline version, embedding metadata, UMAP metadata, source hash, and note count.
+- [x] Same input/configuration produces reproducible coordinates within the accepted numeric tolerance.
+- [x] Failed runs do not overwrite the last valid artifact.
+- [x] Artifact schema validation runs before final write.
 
 **Verification:**
 
-- [ ] Determinism test runs projection twice and compares coordinates.
-- [ ] Hash test changes when included content or path changes and remains unchanged for excluded content.
-- [ ] Atomic-write test simulates a failure before replacement.
-- [ ] End-to-end fixture Pipeline produces a valid `knowledge-space.json`.
+- [x] Determinism test runs projection twice and compares coordinates.
+- [x] Hash test changes when included content or path changes and remains unchanged for excluded content.
+- [x] Atomic-write test simulates a failure before replacement.
+- [x] End-to-end fixture Pipeline produces a valid `knowledge-space.json`.
 
 **Dependencies:** Tasks 2–5
 

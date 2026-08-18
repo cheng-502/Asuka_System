@@ -9,7 +9,8 @@ description = "Offline knowledge-space pipeline for Auaka System"
 requires-python = ">=3.11"
 dependencies = [
     "jsonschema>=4.23,<5",
-    "numpy>=1.26,<3"
+    "numpy>=1.26,<3",
+    "umap-learn>=0.5,<1"
 ]
 
 [project.optional-dependencies]
