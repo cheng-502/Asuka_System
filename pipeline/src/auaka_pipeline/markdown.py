@@ -32,6 +32,7 @@ class ParsedNote:
     domain: str
     wikilinks: tuple[WikilinkReference, ...]
     content_hash: str
+    source_text: str = ""
 
 
 def parse_markdown(
@@ -42,7 +43,8 @@ def parse_markdown(
 ) -> ParsedNote:
     """Parse stable note metadata without executing Markdown or frontmatter code."""
 
-    frontmatter, body = _split_frontmatter(text)
+    normalized_text = text.replace("\r\n", "\n").replace("\r", "\n").lstrip("\ufeff")
+    frontmatter, body = _split_frontmatter(normalized_text)
     title = frontmatter.get("title") or _heading_title(body) or PurePosixPath(note_id).stem
     links = tuple(_extract_wikilinks(_without_fenced_code(body)))
     summary = _extract_summary(_without_fenced_code(body), summary_max_chars)
@@ -56,6 +58,7 @@ def parse_markdown(
         domain=domain,
         wikilinks=links,
         content_hash=content_hash,
+        source_text=normalized_text,
     )
 
 

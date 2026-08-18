@@ -56,6 +56,24 @@
 
 ## Next action
 
+## 2026-08-18 — MVP-2A Chunk Retrieval
+
+- User approved implementation of the local Chunk Retrieval path.
+- Added the MVP-2A design contract and implementation checklist covering Markdown-aware chunks, embedding cache reuse, exact vector search, incremental updates, and `POST /search`.
+- The implementation is starting with source-text retention and test-first chunking.
+
+## 2026-08-18 — MVP-2A implementation complete
+
+- Added `ParsedNote.source_text`, normalized to UTF-8 text with `\n` line endings, without changing Vault files or the existing browser artifact shape.
+- Added Markdown-aware `KnowledgeChunk` records with deterministic heading context, offsets, content hashes, stable IDs, approximate token budgeting, sentence fallback, and overlap.
+- Added versioned chunk cache/index persistence using `chunk-vectors.npy` and `chunk-index.json`; vectors remain high-dimensional and separate from UMAP/browser data.
+- Added incremental rebuild accounting for reused, encoded, added, changed, and removed chunks.
+- Added exact normalized NumPy cosine search with optional `top_k`, `min_score`, and `note_id` filtering.
+- Added localhost `POST /search` with structured validation errors and CLI commands: `auaka-pipeline chunks` and `auaka-pipeline serve`.
+- Added MVP-2A design, task plan, README instructions, and demo-runbook smoke test.
+- Verification: new Python tests 11 passed; existing non-UMAP Python tests 34 passed; frontend Vitest 30 passed; TypeScript check passed; Vite build passed to a writable temporary output directory.
+- Remaining environment note: the pre-existing UMAP deterministic test enters a long Numba/UMAP compilation path in this Windows worktree; it was isolated and stopped after extended runtime. Direct default Vite output also reports `EPERM` because the worktree protects `node_modules/.vite-temp` and `dist`, while the same build succeeds with `--configLoader runner --outDir` to a writable temporary directory.
+
 ## 2026-08-18 — Task 4
 
 - Added `EmbeddingConfig` with multilingual model, expected dimension, cosine metric, normalization, requested device, revision field, and model-cache path.

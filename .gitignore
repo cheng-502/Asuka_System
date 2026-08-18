@@ -21,8 +21,10 @@ data/embedding-index.json
 data/knowledge-space.json
 data/embeddings/
 data/model-cache/
+data/chunks/
 data/knowledge-space.real.json
 frontend/public/data/knowledge-space.real.json
 pipeline/reports/
 pipeline/data/model-cache/
+pipeline/data/chunks/
 **/*.egg-info/

@@ -16,6 +16,7 @@ from .embeddings import (
 DEFAULT_VAULT_PATH = Path(r"C:\Users\lin20\Desktop\广药文件\Obsidian Vault")
 DEFAULT_HAND_MODEL_PATH = Path("frontend/public/models/hand_landmarker.task")
 DEFAULT_MODEL_CACHE_PATH = Path("data/model-cache")
+DEFAULT_CHUNK_INDEX_PATH = Path("data/chunks")
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +29,7 @@ class RuntimeConfig:
     embedding_dimension: int = DEFAULT_EMBEDDING_DIMENSION
     embedding_device: str = "auto"
     embedding_cache_path: Path = DEFAULT_MODEL_CACHE_PATH
+    chunk_index_path: Path = DEFAULT_CHUNK_INDEX_PATH
 
     @property
     def embedding_config(self) -> EmbeddingConfig:
@@ -56,5 +58,8 @@ class RuntimeConfig:
             embedding_device=os.getenv("AUAKA_EMBEDDING_DEVICE", "auto"),
             embedding_cache_path=Path(
                 os.getenv("AUAKA_MODEL_CACHE_PATH", str(DEFAULT_MODEL_CACHE_PATH))
+            ),
+            chunk_index_path=Path(
+                os.getenv("AUAKA_CHUNK_INDEX_PATH", str(DEFAULT_CHUNK_INDEX_PATH))
             ),
         )

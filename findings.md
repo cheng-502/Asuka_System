@@ -125,6 +125,15 @@ The final design must also identify the pipeline version used to generate the ar
 - MVP-2: voice query, knowledge search, knowledge-space focus, chunk embeddings, vector search, RAG, and LLM answers.
 - MVP-3: Agent actions that retrieve knowledge, create/update Obsidian notes, re-embed the vault, and add new nodes to the space.
 
+## 2026-08-18 — MVP-2A Chunk Retrieval decisions
+
+- Chunk retrieval is a separate high-dimensional path; persisted UMAP coordinates and note vectors are never used as a retrieval substitute.
+- Chunks are Markdown-aware: heading paths and paragraph boundaries are retained, long content is split with approximately 50-token overlap, and short sections are not artificially padded.
+- Chunk offsets refer to normalized full-source text (`UTF-8` decoded with `\n` line endings), while the Vault remains read-only.
+- Each chunk is identified by note ID, heading path, and deterministic ordinal, and stores a SHA-256 content hash for incremental reuse.
+- The first local vector index uses exact cosine search over normalized NumPy vectors. This is appropriate for the first 100–1,000 notes and keeps the backend replaceable.
+- The local retrieval service exposes `POST /search` on `127.0.0.1` with structured validation errors. MVP-2A stops before voice, LLM/RAG answer generation, Agent actions, and Vault writes.
+
 ## Design Principle
 
 The final differentiator is a knowledge space that can eventually be changed by an Agent. MVP-1 intentionally proves the spatial knowledge interface and hand interaction first, before adding retrieval or automation complexity.

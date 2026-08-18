@@ -38,6 +38,7 @@ class CliTest(unittest.TestCase):
                 "AUAKA_EMBEDDING_DIMENSION": "3",
                 "AUAKA_EMBEDDING_DEVICE": "cpu",
                 "AUAKA_MODEL_CACHE_PATH": "data/test-model-cache",
+                "AUAKA_CHUNK_INDEX_PATH": "data/test-chunks",
             },
             clear=False,
         ):
@@ -52,6 +53,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(config.embedding_dimension, 3)
         self.assertEqual(config.embedding_device, "cpu")
         self.assertEqual(config.embedding_cache_path, Path("data/test-model-cache"))
+        self.assertEqual(config.chunk_index_path, Path("data/test-chunks"))
         self.assertEqual(config.embedding_config.metric, "cosine")
 
     def test_scan_command_prints_structured_read_only_report(self) -> None:
@@ -79,6 +81,37 @@ class CliTest(unittest.TestCase):
                 main(["scan", "--vault", str(vault)])
 
         self.assertTrue(output.getvalue().isascii())
+
+    def test_chunks_command_builds_an_incremental_index_report(self) -> None:
+        import numpy as np
+
+        class FakeEmbedder:
+            dimension = 3
+            runtime_device = "cpu"
+            revision = "test-revision"
+
+            def encode(self, texts: list[str], *, normalize_embeddings: bool) -> np.ndarray:
+                del normalize_embeddings
+                return np.asarray([[1.0, 0.0, 0.0] for _ in texts], dtype=np.float32)
+
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            vault = Path(temporary_dir) / "vault"
+            vault.mkdir()
+            (vault / "note.md").write_text("# Note\n\nContent.", encoding="utf-8")
+            cache = Path(temporary_dir) / "chunks"
+            output = io.StringIO()
+
+            with patch.dict(os.environ, {"AUAKA_EMBEDDING_DIMENSION": "3"}, clear=False):
+                with patch("auaka_pipeline.cli.load_sentence_transformer_embedder", return_value=FakeEmbedder()):
+                    with redirect_stdout(output):
+                        exit_code = main(["chunks", "--vault", str(vault), "--cache", str(cache)])
+            cache_exists = (cache / "chunk-index.json").exists()
+
+        report = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["total_count"], 1)
+        self.assertEqual(report["encoded_count"], 1)
+        self.assertTrue(cache_exists)
 
 
 if __name__ == "__main__":

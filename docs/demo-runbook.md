@@ -87,4 +87,43 @@ The default URL without `?artifact=...` uses the checked-in two-note fixture.
 - Nodes moved unexpectedly: compare the artifact `source.vault_hash`, embedding revision, and UMAP metadata before regenerating.
 - Private data: do not commit `data/embeddings/`, `pipeline/data/model-cache/`, or `data/knowledge-space.real.json`.
 
-MVP-2 features (voice, RAG, LLM, Agent, and Vault mutation) are intentionally not part of this runbook.
+## 5. MVP-2A chunk retrieval smoke test
+
+MVP-2A is a separate local service. It uses Markdown-aware chunks and the
+original high-dimensional multilingual embeddings; it does not query UMAP.
+The Vault remains read-only.
+
+From the repository root, build or update the exact-cosine index:
+
+```powershell
+$env:AUAKA_MODEL_CACHE_PATH = "D:\1job\Auaka System\.worktrees\mvp1-implementation\pipeline\data\model-cache"
+$env:HF_HUB_OFFLINE = "1"
+
+auaka-pipeline chunks `
+  --vault "C:\Users\lin20\Desktop\广药文件\Obsidian Vault" `
+  --cache "data\chunks"
+```
+
+The first run encodes all current chunks. Later runs should report nonzero
+`reused_count` and encode only added or content-hash-changed chunks. The cache
+records chunk IDs, note IDs, heading paths, normalized source offsets, content
+hashes, model metadata, and chunking configuration.
+
+Start the local API in another terminal:
+
+```powershell
+auaka-pipeline serve --index "data\chunks" --host 127.0.0.1 --port 8765
+```
+
+Then search:
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8765/search `
+  -H "Content-Type: application/json" `
+  -d '{"query":"手眼标定","top_k":5,"min_score":0.60}'
+```
+
+The response contains ranked chunks with `note_id`, `heading_path`, original
+chunk content, offsets, content hash, and cosine `score`. Voice, LLM/RAG answer
+generation, Agent actions, and Vault mutation are intentionally not part of
+MVP-2A.
