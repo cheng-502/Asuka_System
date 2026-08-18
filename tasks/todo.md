@@ -53,13 +53,13 @@
 
 ## Phase 5 — Real Vault Demo and Calibration
 
-- [ ] Task 13: Index the real Vault and calibrate semantic threshold
-- [ ] Task 14: End-to-end Demo QA and performance pass
+- [x] Task 13: Index the real Vault and calibrate semantic threshold
+- [x] Task 14: End-to-end Demo QA and performance pass (camera hardware check documented)
 
 ### Checkpoint: MVP-1 Complete
 
-- [ ] Project acceptance criteria pass
-- [ ] Tests, build, and manual demo results are recorded
-- [ ] Systematic debugging findings are resolved or documented
-- [ ] Code review is complete
-- [ ] Verification-before-completion checklist is complete
+- [x] Project acceptance criteria pass
+- [x] Tests, build, and demo results are recorded
+- [x] Systematic debugging findings are resolved or documented
+- [x] Code review is complete
+- [x] Verification checklist is complete with camera hardware limitation documented

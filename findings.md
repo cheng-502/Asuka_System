@@ -128,3 +128,12 @@ The final design must also identify the pipeline version used to generate the ar
 ## Design Principle
 
 The final differentiator is a knowledge space that can eventually be changed by an Agent. MVP-1 intentionally proves the spatial knowledge interface and hand interaction first, before adding retrieval or automation complexity.
+
+## 2026-08-18 — Real Vault calibration
+
+- The read-only scan completed against the configured Obsidian Vault with 351 included notes, 36 excluded Markdown files, 575 unresolved Wikilinks, and 0 read errors.
+- The local `BAAI/bge-m3` run used dimension 1024 on CPU and cached model revision `5617a9f61b028005a4858fdac845db406aefb181`.
+- The model-only cross-language sanity check for `目标检测` and `object detection` returned cosine similarity `0.644856`, above the integration threshold `0.3`. The real Vault did not contain exact note titles for both strings, so this pair was validated through the selected model's sanity test rather than a direct note-to-note match.
+- The full pairwise diagnostic contained 61,425 unique similarities: min `0.177512`, p25 `0.383474`, median `0.424516`, p75 `0.468180`, mean `0.435337`, max `1.0`.
+- Threshold decision: use `min_similarity=0.60` together with `max_neighbors=5`. Candidate counts were 1,331 semantic records at `0.50`, 1,055 at `0.55`, 649 at `0.60`, 383 at `0.65`, and 271 at `0.70`; `0.60` selects the high-similarity tail without making the graph too sparse.
+- The generated real artifact is kept at ignored path `data/knowledge-space.real.json`; high-dimensional vectors and model cache are also ignored. No Vault files are written by the Pipeline.

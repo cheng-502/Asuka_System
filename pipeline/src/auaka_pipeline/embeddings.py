@@ -147,13 +147,17 @@ def embed_notes(
         vectors = vectors / norms
 
     runtime_device = str(getattr(embedder, "runtime_device", config.device))
+    metadata = config.metadata(
+        dimension=vectors.shape[1], runtime_device=runtime_device
+    )
+    embedder_revision = getattr(embedder, "revision", None)
+    if embedder_revision:
+        metadata["revision"] = str(embedder_revision)
     return EmbeddingBatch(
         note_ids=tuple(note.note_id for note in notes),
         content_hashes=tuple(note.content_hash for note in notes),
         vectors=vectors,
-        metadata=config.metadata(
-            dimension=vectors.shape[1], runtime_device=runtime_device
-        ),
+        metadata=metadata,
     )
 
 
@@ -222,11 +226,17 @@ class SentenceTransformerEmbedder:
                 f"could not load embedding model {config.model!r}: {error}"
             ) from error
 
-        dimension = self._model.get_sentence_embedding_dimension()
+        dimension_reader = getattr(
+            self._model,
+            "get_embedding_dimension",
+            self._model.get_sentence_embedding_dimension,
+        )
+        dimension = dimension_reader()
         if dimension is None:
             raise EmbeddingError("embedding model did not report its dimension")
         self.dimension = int(dimension)
         self.runtime_device = str(getattr(self._model, "device", config.device))
+        self.revision = _resolve_model_revision(config)
 
     def encode(
         self, texts: Sequence[str], *, normalize_embeddings: bool
@@ -254,3 +264,25 @@ def load_sentence_transformer_embedder(
     """
 
     return SentenceTransformerEmbedder(config)
+
+
+def _resolve_model_revision(config: EmbeddingConfig) -> str | None:
+    if config.revision:
+        return config.revision
+    cached_revision = (
+        config.cache_dir
+        / f"models--{config.model.replace('/', '--')}"
+        / "refs"
+        / "main"
+    )
+    if cached_revision.is_file():
+        value = cached_revision.read_text(encoding="utf-8").strip()
+        if value:
+            return value
+    try:
+        from huggingface_hub import model_info
+
+        info = model_info(config.model, revision="main")
+        return str(info.sha) if info.sha else "main"
+    except Exception:  # pragma: no cover - offline/cache-only environments
+        return None

@@ -192,7 +192,9 @@ def _cosine_matrix(vectors: np.ndarray) -> np.ndarray:
     if np.any(norms <= np.finfo(np.float32).eps):
         raise EmbeddingError("semantic links require non-zero embedding vectors")
     normalized = matrix / norms
-    return normalized @ normalized.T
+    # Float32 dot products can produce values such as 1.0000002 for a
+    # mathematically identical vector; the artifact contract is [-1, 1].
+    return np.clip(normalized @ normalized.T, -1.0, 1.0)
 
 
 def _similarity_distribution(

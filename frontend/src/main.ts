@@ -39,7 +39,8 @@ async function boot(): Promise<void> {
   if (!sceneRoot || !statusCopy || !statusPill) return;
 
   try {
-    const artifact = await loadArtifact();
+    const artifactPath = new URLSearchParams(window.location.search).get("artifact") ?? "/data/knowledge-space.json";
+    const artifact = await loadArtifact(artifactPath);
     const detailRoot = document.querySelector<HTMLElement>("#detail-root");
     const cameraRoot = document.querySelector<HTMLElement>("#camera-root");
     const detailPanel = detailRoot ? new DetailPanel(detailRoot, artifact) : null;

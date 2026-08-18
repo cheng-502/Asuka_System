@@ -24,3 +24,6 @@ npm run dev
 The Vault and local Hand Landmarker model are configured through environment
 variables. Generated vectors, private artifacts, environment files, and build
 outputs are excluded by `.gitignore`.
+
+For the real 351-note Vault generation and gesture acceptance flow, see
+[`docs/demo-runbook.md`](docs/demo-runbook.md).

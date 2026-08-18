@@ -118,6 +118,19 @@ class RelationshipTest(unittest.TestCase):
         self.assertEqual(result.distribution["count"], 3)
         self.assertEqual(result.distribution["threshold"], 0.7)
 
+    def test_cosine_rounding_is_clipped_to_artifact_bounds(self) -> None:
+        notes = [note("a.md"), note("b.md")]
+        embeddings = batch(("a.md", "b.md"), [[1.0, 0.0], [1.0, 0.0]])
+
+        result = build_relationships(
+            notes,
+            embeddings,
+            RelationshipConfig(max_neighbors=1, min_similarity=0.99),
+        )
+
+        self.assertLessEqual(result.links[0].similarity or 0.0, 1.0)
+        self.assertLessEqual(result.distribution["max"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

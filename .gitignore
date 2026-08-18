@@ -19,4 +19,10 @@ frontend/dist/
 data/embeddings.npy
 data/embedding-index.json
 data/knowledge-space.json
+data/embeddings/
+data/model-cache/
+data/knowledge-space.real.json
+frontend/public/data/knowledge-space.real.json
 pipeline/reports/
+pipeline/data/model-cache/
+**/*.egg-info/

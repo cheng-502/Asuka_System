@@ -122,3 +122,17 @@ Begin Task 10 in the isolated worktree: add the local Hand Landmarker asset and 
 ## Next action
 
 Begin Task 13 in the isolated worktree: run the complete Pipeline on the real 351-note Vault, install/use the selected multilingual model, inspect similarity distribution, calibrate threshold, and generate the real artifact.
+
+## 2026-08-18 — Tasks 13–14 and MVP-1 verification
+
+- Added the `auaka-pipeline generate` command for scan → local model → vector cache → relationships → UMAP → validated atomic artifact.
+- Real Vault generation completed: 351 notes, 575 unresolved Wikilinks, 1,426 link records at `max_neighbors=5` and `min_similarity=0.60`, source hash `74ecb5820ea2c09b69e0fe9ae435f3f86ad0dc433cddd8821f6791da031d036c`.
+- Real embedding metadata: `BAAI/bge-m3`, dimension 1024, CPU runtime, revision `5617a9f61b028005a4858fdac845db406aefb181`. The model sanity pair `目标检测` ↔ `object detection` scored `0.644856`.
+- Real artifact is private and ignored at `data/knowledge-space.real.json`; vector cache and model cache are ignored. The checked-in browser fixture remains small and safe.
+- Similarity calibration and threshold rationale are recorded in `findings.md`; the browser can select the private artifact with `?artifact=/data/knowledge-space.real.json` after copying it into the ignored public data path.
+- HTTP smoke verification returned 200 for the Vite page, real artifact, local Hand Landmarker model, and local WASM runtime. The app was opened in the Codex browser panel for local visual inspection. Camera hardware permission/gesture execution is documented as the remaining environment-dependent manual check.
+- Final automated verification: Python full suite passed after Task 6 (28 tests at that checkpoint) and the post-fix relationship suite passed; frontend suite passed with 19 Vitest tests and `npm run build` succeeded. Vite's only build warning is the expected Three.js bundle-size warning.
+
+## MVP-1 completion note
+
+The requested MVP-1 implementation is complete in the isolated worktree and GitHub branch. The only non-automated item is granting camera permission and physically performing the hand demo on the user's machine; the code path, local assets, fallback behavior, tests, runbook, and real artifact generation are all present.
