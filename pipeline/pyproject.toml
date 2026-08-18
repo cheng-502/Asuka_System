@@ -7,7 +7,9 @@ name = "auaka-knowledge-pipeline"
 version = "0.1.0"
 description = "Offline knowledge-space pipeline for Auaka System"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "jsonschema>=4.23,<5"
+]
 
 [project.scripts]
 auaka-pipeline = "auaka_pipeline.cli:main"

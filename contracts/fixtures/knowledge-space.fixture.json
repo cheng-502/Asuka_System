@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "generated_at": "2026-08-18T12:00:00Z",
+  "pipeline": {
+    "version": "mvp1.0.0"
+  },
+  "embedding": {
+    "model": "BAAI/bge-m3",
+    "dimension": 1024,
+    "metric": "cosine",
+    "normalized": true
+  },
+  "umap": {
+    "n_components": 3,
+    "random_state": 42,
+    "metric": "cosine"
+  },
+  "source": {
+    "vault_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "note_count": 2
+  },
+  "nodes": [
+    {
+      "id": "01/目标检测.md",
+      "title": "目标检测",
+      "summary": "Object detection notes.",
+      "domain": "01",
+      "position": {
+        "x": 0.1,
+        "y": -0.2,
+        "z": 0.3
+      },
+      "explicit_link_count": 1
+    },
+    {
+      "id": "02/object-detection.md",
+      "title": "object detection",
+      "summary": "Cross-language concept.",
+      "domain": "02",
+      "position": {
+        "x": -0.1,
+        "y": 0.2,
+        "z": -0.3
+      },
+      "explicit_link_count": 0
+    }
+  ],
+  "links": [
+    {
+      "source": "01/目标检测.md",
+      "target": "02/object-detection.md",
+      "types": ["wikilink", "semantic"],
+      "similarity": 0.86,
+      "is_unresolved": false
+    },
+    {
+      "source": "01/目标检测.md",
+      "target": "missing-note",
+      "types": ["wikilink"],
+      "is_unresolved": true,
+      "unresolved_target": "missing-note"
+    }
+  ]
+}
