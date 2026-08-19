@@ -16,14 +16,30 @@ function openPalm(indexX: number, indexY = 0.2): HandLandmark[] {
 }
 
 describe("GestureEngine", () => {
-  it("emits a smoothed screen-space Pointer", () => {
-    const engine = new GestureEngine({ pointerSmoothing: 0.5 });
-    expect(engine.update(landmarks({ 8: { x: 0.2, y: 0.2 }, 4: { x: 0.8, y: 0.8 } }))).toEqual([
+  it("emits a timestamp-filtered screen-space Pointer", () => {
+    const engine = new GestureEngine({ pointerDeadzonePx: 0 });
+    expect(engine.update(landmarks({ 8: { x: 0.2, y: 0.2 }, 4: { x: 0.8, y: 0.8 } }), 0)).toEqual([
       { type: "pointer", x: 0.2, y: 0.2 },
     ]);
-    expect(engine.update(landmarks({ 8: { x: 0.8, y: 0.8 }, 4: { x: 0.1, y: 0.1 } }))).toEqual([
-      { type: "pointer", x: 0.5, y: 0.5 },
-    ]);
+    const moved = engine.update(
+      landmarks({ 8: { x: 0.8, y: 0.8 }, 4: { x: 0.1, y: 0.1 } }),
+      16,
+      { width: 1920, height: 1080 },
+    )[0] as { type: "pointer"; x: number; y: number };
+    expect(moved.x).toBeGreaterThan(0.2);
+    expect(moved.x).toBeLessThan(0.8);
+    expect(moved.y).toBeGreaterThan(0.2);
+    expect(moved.y).toBeLessThan(0.8);
+  });
+
+  it("resets pointer filtering after the configured no-hand transition", () => {
+    const engine = new GestureEngine({ pointerDeadzonePx: 0, noHandTimeoutFrames: 1 });
+    engine.update(landmarks({ 8: { x: 0.2, y: 0.2 } }), 0);
+    engine.update(landmarks({ 8: { x: 0.8, y: 0.8 } }), 16);
+    expect(engine.update(null, 32)).toEqual([{ type: "no_hand" }]);
+    expect(engine.update(landmarks({ 8: { x: 0.7, y: 0.7 } }), 48)).toContainEqual({
+      type: "pointer", x: 0.7, y: 0.7,
+    });
   });
 
   it("fires Pinch once after stable frames and retriggers after release", () => {

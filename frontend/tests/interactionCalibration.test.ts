@@ -64,6 +64,10 @@ describe("interaction calibration profile", () => {
   it("maps currently supported runtime parameters without inventing legacy equivalents", () => {
     expect(gestureConfigFromCalibration(DEFAULT_INTERACTION_CALIBRATION)).toEqual({
       autoExitTimeoutMs: 15_000,
+      pointerMinCutoff: 1,
+      pointerBeta: 0.007,
+      pointerDerivativeCutoff: 1,
+      pointerDeadzonePx: 4,
     });
   });
 

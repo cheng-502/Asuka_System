@@ -71,8 +71,21 @@ export const DEFAULT_INTERACTION_CALIBRATION = validateInteractionCalibration(
 
 export function gestureConfigFromCalibration(
   profile: InteractionCalibrationProfile,
-): Pick<GestureConfig, "autoExitTimeoutMs"> {
-  return { autoExitTimeoutMs: profile.tracking.auto_exit_ms };
+): Pick<
+  GestureConfig,
+  | "autoExitTimeoutMs"
+  | "pointerMinCutoff"
+  | "pointerBeta"
+  | "pointerDerivativeCutoff"
+  | "pointerDeadzonePx"
+> {
+  return {
+    autoExitTimeoutMs: profile.tracking.auto_exit_ms,
+    pointerMinCutoff: profile.pointer.min_cutoff,
+    pointerBeta: profile.pointer.beta,
+    pointerDerivativeCutoff: profile.pointer.derivative_cutoff,
+    pointerDeadzonePx: profile.pointer.deadzone_px,
+  };
 }
 
 export async function loadInteractionCalibration(

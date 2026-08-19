@@ -250,3 +250,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Optional profile loading has a 1.5-second timeout covering request, response body, and validation, so a stalled config cannot block mouse/scene startup.
 - Spec review passed; quality findings were fixed and final quality review approved.
 - Verification: 70 frontend tests passed, TypeScript passed, and Vite production build passed. Existing bundle-size warning remains nonblocking.
+
+## 2026-08-20 — MVP-1.5 Task 3 complete
+
+- Added a timestamp-aware One Euro pointer filter with a viewport-pixel deadzone and deterministic reset behavior.
+- Added a visible hand pointer with a calibrated cursor dot, hit ring, and hover feedback; it never captures mouse input.
+- Pointer parameters now come from the versioned interaction-calibration profile.
+- Invalid zero-hand and multi-hand frames hide the one-hand pointer immediately, preventing stale pointer residue while preserving mouse mode.
+- Browser smoke verification found no console warnings/errors; independent specification review passed and quality review approved after the hand-count transition fix.
+- Verification: 78 frontend tests passed, TypeScript passed, Vite production build passed, and `git diff --check` passed. The existing Three.js bundle-size warning remains nonblocking.

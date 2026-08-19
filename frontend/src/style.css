@@ -44,6 +44,54 @@ input {
   height: 100%;
 }
 
+.hand-pointer {
+  position: absolute;
+  z-index: 6;
+  width: var(--hit-diameter);
+  height: var(--hit-diameter);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 80ms linear;
+}
+
+.hand-pointer[hidden] {
+  display: none;
+}
+
+.hand-pointer-hit-ring,
+.hand-pointer-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.hand-pointer-hit-ring {
+  width: var(--hit-diameter);
+  height: var(--hit-diameter);
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.hand-pointer-dot {
+  width: var(--cursor-diameter);
+  height: var(--cursor-diameter);
+  border: 2px solid rgba(224, 242, 254, 0.95);
+  background: #38bdf8;
+  box-shadow: 0 0 0.8rem rgba(56, 189, 248, 0.9);
+}
+
+.hand-pointer.is-hovering .hand-pointer-hit-ring {
+  border-color: rgba(45, 212, 191, 0.9);
+  background: rgba(45, 212, 191, 0.14);
+}
+
+.hand-pointer.is-hovering .hand-pointer-dot {
+  background: #2dd4bf;
+  box-shadow: 0 0 1rem rgba(45, 212, 191, 1);
+}
+
 .shell {
   min-height: 100vh;
 }

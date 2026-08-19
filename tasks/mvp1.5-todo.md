@@ -3,7 +3,7 @@
 - [x] Task 1: Canonical hand-frame and coordinate contracts
 - [x] Task 2: Versioned calibration profile
 - [x] Checkpoint: contracts/profile review
-- [ ] Task 3: Visible filtered pointer
+- [x] Task 3: Visible filtered pointer
 - [ ] Task 4: Palm-normalized pinch state machine
 - [ ] Checkpoint: one-hand interaction browser check
 - [ ] Task 5: Open Palm and two-hand baseline transforms

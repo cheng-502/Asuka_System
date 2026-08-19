@@ -1,4 +1,5 @@
 import type { NormalizedLandmark } from "./HandFrame";
+import { PointerFilter, type PointerViewport } from "./PointerFilter";
 
 export type HandLandmark = NormalizedLandmark;
 
@@ -15,7 +16,10 @@ export type GestureEvent =
   | { type: "rotate"; delta: number };
 
 export interface GestureConfig {
-  pointerSmoothing: number;
+  pointerMinCutoff: number;
+  pointerBeta: number;
+  pointerDerivativeCutoff: number;
+  pointerDeadzonePx: number;
   pinchDistance: number;
   pinchStableFrames: number;
   openPalmStableFrames: number;
@@ -26,7 +30,10 @@ export interface GestureConfig {
 }
 
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
-  pointerSmoothing: 0.35,
+  pointerMinCutoff: 1,
+  pointerBeta: 0.007,
+  pointerDerivativeCutoff: 1,
+  pointerDeadzonePx: 4,
   pinchDistance: 0.08,
   pinchStableFrames: 3,
   openPalmStableFrames: 3,
@@ -38,7 +45,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
 
 export class GestureEngine {
   private readonly config: GestureConfig;
-  private smoothedPointer: { x: number; y: number } | null = null;
+  private readonly pointerFilter: PointerFilter;
   private pinchFrames = 0;
   private pinchActive = false;
   private openPalmFrames = 0;
@@ -52,9 +59,19 @@ export class GestureEngine {
 
   constructor(config: Partial<GestureConfig> = {}) {
     this.config = { ...DEFAULT_GESTURE_CONFIG, ...config };
+    this.pointerFilter = new PointerFilter({
+      minCutoff: this.config.pointerMinCutoff,
+      beta: this.config.pointerBeta,
+      derivativeCutoff: this.config.pointerDerivativeCutoff,
+      deadzonePx: this.config.pointerDeadzonePx,
+    });
   }
 
-  update(input: GestureInput, timestamp = performance.now()): GestureEvent[] {
+  update(
+    input: GestureInput,
+    timestamp = performance.now(),
+    viewport: PointerViewport = { width: 1920, height: 1080 },
+  ): GestureEvent[] {
     const hands = normalizeHands(input);
     if (!hands.length) return this.handleNoHand(timestamp);
     this.noHandFrames = 0;
@@ -66,11 +83,19 @@ export class GestureEngine {
       return this.handleTwoHands(orderedHands[0], orderedHands[1]);
     }
     this.resetTwoHandBaseline();
-    return this.handleSingleHand(hands[0]);
+    return this.handleSingleHand(hands[0], timestamp, viewport);
   }
 
-  private handleSingleHand(landmarks: HandLandmarks): GestureEvent[] {
-    const pointer = this.smoothPointer(landmarks[8]);
+  private handleSingleHand(
+    landmarks: HandLandmarks,
+    timestamp: number,
+    viewport: PointerViewport,
+  ): GestureEvent[] {
+    const pointer = this.pointerFilter.update(
+      timestamp,
+      { x: clamp01(landmarks[8].x), y: clamp01(landmarks[8].y) },
+      viewport,
+    );
     const events: GestureEvent[] = [{ type: "pointer", ...pointer }];
     const pinching = distance(landmarks[4], landmarks[8]) <= this.config.pinchDistance;
     const openPalm = !pinching && isOpenPalm(landmarks);
@@ -102,7 +127,7 @@ export class GestureEngine {
   }
 
   reset(): void {
-    this.smoothedPointer = null;
+    this.pointerFilter.reset();
     this.pinchFrames = 0;
     this.pinchActive = false;
     this.openPalmFrames = 0;
@@ -112,20 +137,6 @@ export class GestureEngine {
     this.noHandSince = null;
     this.autoExitActive = false;
     this.resetTwoHandBaseline();
-  }
-
-  private smoothPointer(indexTip: HandLandmark): { x: number; y: number } {
-    const raw = { x: clamp01(indexTip.x), y: clamp01(indexTip.y) };
-    if (!this.smoothedPointer) {
-      this.smoothedPointer = raw;
-      return raw;
-    }
-    const alpha = this.config.pointerSmoothing;
-    this.smoothedPointer = {
-      x: this.smoothedPointer.x + (raw.x - this.smoothedPointer.x) * alpha,
-      y: this.smoothedPointer.y + (raw.y - this.smoothedPointer.y) * alpha,
-    };
-    return this.smoothedPointer;
   }
 
   private handleNoHand(timestamp = performance.now()): GestureEvent[] {
@@ -139,6 +150,7 @@ export class GestureEngine {
     const events: GestureEvent[] = [];
     if (!this.noHandActive && this.noHandFrames >= this.config.noHandTimeoutFrames) {
       this.noHandActive = true;
+      this.pointerFilter.reset();
       events.push({ type: "no_hand" });
     }
     if (

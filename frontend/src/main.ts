@@ -13,6 +13,7 @@ import { InteractionController } from "./app/InteractionController";
 import { DetailPanel } from "./ui/DetailPanel";
 import { CameraPreview } from "./ui/CameraPreview";
 import { InteractionGuide } from "./ui/InteractionGuide";
+import { PointerPresenter, shouldShowPointerForHandCount } from "./ui/PointerPresenter";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -41,6 +42,7 @@ app.innerHTML = `
 const sceneRoot = document.querySelector<HTMLElement>("#scene-root");
 const statusCopy = document.querySelector<HTMLElement>("#status-copy");
 const statusPill = document.querySelector<HTMLElement>("#status-pill");
+const shell = document.querySelector<HTMLElement>(".shell");
 
 async function boot(): Promise<void> {
   if (!sceneRoot || !statusCopy || !statusPill) return;
@@ -56,7 +58,12 @@ async function boot(): Promise<void> {
     const guideRoot = document.querySelector<HTMLElement>("#guide-root");
     const detailPanel = detailRoot ? new DetailPanel(detailRoot, artifact) : null;
     if (guideRoot) new InteractionGuide(guideRoot);
+    const pointerPresenter = shell ? new PointerPresenter(shell, {
+      cursorDiameterPx: calibrationResult.profile.pointer.cursor_diameter_px,
+      hitRadiusPx: calibrationResult.profile.pointer.hit_radius_px,
+    }) : null;
     const scene = new KnowledgeScene(sceneRoot, artifact, {
+      onHover: (nodeId) => pointerPresenter?.setHovered(nodeId !== null),
       onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
     });
     const gestureEngine = new GestureEngine(
@@ -69,6 +76,7 @@ async function boot(): Promise<void> {
       tracker?.stop();
       gestureEngine.reset();
       scene.clearHover();
+      pointerPresenter?.hide();
       cameraPreview?.setIdle();
       cameraPreview?.setStatus("Camera off · mouse mode");
     }
@@ -87,11 +95,17 @@ async function boot(): Promise<void> {
       onFrame: (frame) => {
         const rawHands = frame.hands.map((hand) => hand.landmarks);
         cameraPreview?.setLandmarks(rawHands.length ? rawHands : null);
+        if (!shouldShowPointerForHandCount(rawHands.length)) pointerPresenter?.hide();
         const displayHands = rawHands.map(mirrorHandLandmarks);
         for (const event of gestureEngine.update(
           displayHands.length ? displayHands : null,
           frame.timestampMs,
-        )) interaction.handle(event);
+          { width: window.innerWidth, height: window.innerHeight },
+        )) {
+          if (event.type === "pointer") pointerPresenter?.show(event.x, event.y);
+          if (event.type === "no_hand" || event.type === "auto_exit") pointerPresenter?.hide();
+          interaction.handle(event);
+        }
       },
       onStatus: (message) => cameraPreview?.setStatus(message),
     });
