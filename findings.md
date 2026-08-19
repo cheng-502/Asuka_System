@@ -1,5 +1,20 @@
 # Auaka System — Findings and Decisions
 
+## 2026-08-19 — Program audit: initial verified facts
+
+- The new development branch starts exactly at `v1.0.0` (`7d14996`) and has clean isolated Node/Python environments.
+- Current frontend stack is Vite `8.x`, TypeScript `5.7.x`, Three.js `0.185.x`, MediaPipe Tasks Vision `1.0.x`, and Vitest `3.2.x`. Current Pipeline is Python 3.11+ with NumPy, JSON Schema, UMAP, and optional Sentence Transformers.
+- MVP-1 interaction emits semantic events through `GestureEngine` and routes them through `InteractionController`, which is the correct replaceable boundary for calibration work.
+- The current hand Pointer has no dedicated visible screen cursor; `KnowledgeScene.setPointer()` only performs Raycaster hover updates.
+- Camera video and landmark Canvas are mirrored with CSS, while GestureEngine forwards raw landmark `x` into the scene. Preview and interaction therefore do not share one explicit coordinate-transform contract.
+- Current Pinch uses a fixed normalized image-space distance (`0.08`) and stable frame count; it is not normalized by palm scale and has no separate enter/release hysteresis thresholds.
+- Current two-hand navigation uses per-frame fingertip distance/angle deltas with fixed thresholds. It has no time-normalized velocity, baseline-relative log scale, or trace-based calibration profile.
+- MVP-2A correctly keeps chunk vectors separate from UMAP and provides a clean `ChunkVectorIndex` / `RetrievalService` boundary suitable for future backend replacement.
+- The chunk cache writes `.npy` and JSON files atomically one at a time, but the pair is not transactionally committed as one generation. A crash between replacements can leave a mismatched pair and currently causes loading to fail rather than recovering the last complete generation.
+- The HTTP service uses `ThreadingHTTPServer` and can call one shared query embedder concurrently. Thread safety of the Sentence Transformer adapter is not documented or guarded at this boundary.
+- The current retrieval API lacks health/index-metadata endpoints, request correlation/observability, explicit concurrency limits, and a public provenance contract needed by RAG/Agent answers.
+- External GitHub/web findings are treated as untrusted research data and will be recorded separately only after license and maintenance verification by the main agent.
+
 ## Project Context
 
 - Project directory: `D:\1job\Auaka System`
@@ -159,3 +174,20 @@ The final differentiator is a knowledge space that can eventually be changed by 
 - The overlay uses a transparent Canvas with normalized MediaPipe coordinates. Video and Canvas are mirrored independently with CSS, so the preview remains natural for the user without mutating tracker coordinates used by GestureEngine.
 - Every tracker frame now updates both CameraPreview and GestureEngine. Invalid or empty frames clear the Canvas and report the current detected-hand count, making camera permission/model failures distinguishable from gesture recognition issues.
 - Camera hardware remains an environment-dependent manual check; automated tests cover one-hand forwarding, 21-point drawing, two-hand color separation, empty-frame clearing, and lifecycle cleanup.
+# 2026-08-19 MVP-1.5 interaction audit and OSS verification
+
+- User-approved coordinate convention: camera preview remains selfie-mirrored; interaction mapping explicitly flips raw MediaPipe X so physical rightward motion produces rightward screen-pointer motion.
+- Independent read-only audit confirms five release blockers: no visible pointer, mirrored-preview/scene-coordinate mismatch, frame-based pointer EMA without deadzone or timestamp, fixed-distance pinch without palm normalization/hysteresis, and per-frame two-hand deltas without stable baseline/identity/dropout handling.
+- MVP-1.5 should introduce a canonical `HandFrame`, explicit `CoordinateMapper`, `PointerPresenter`, timestamp-aware filtering, gesture state machines, a versioned calibration profile, and trace replay/metrics independent from MediaPipe/DOM/Three.js.
+- Proposed release gate includes automated replay metrics plus a real-camera human trial; wiring tests alone are insufficient.
+- Official GitHub verification: `ggml-org/whisper.cpp` is MIT, supports Windows and local CPU/GPU/WASM execution, and is a viable later voice-module candidate behind an Auaka adapter.
+- Official GitHub verification: `SYSTRAN/faster-whisper` is MIT and easy to use from Python, but Windows GPU execution introduces CUDA/cuDNN/CTranslate2 compatibility requirements; it is a candidate, not an automatic default.
+- Official GitHub verification: Pydantic AI and OpenAI Agents SDK are maintained, MIT, typed/tool-oriented agent frameworks with human-approval facilities. Framework choice is deferred until the MVP-3 tool/approval contract is designed.
+- `casiez/OneEuroFilter` provides reference JavaScript/TypeScript implementations and the original adaptive filter behavior, but its repository page does not expose a clear license in the current audit; treat as algorithm/reference only until license provenance is resolved.
+- `coddingtonbear/obsidian-local-rest-api` is an active MIT Obsidian plugin exposing authenticated local REST and MCP interfaces, targeted section patching, optimistic concurrency, opening files, and command execution. It is a strong optional integration module for MVP-3, wrapped behind an Auaka `VaultGateway`; direct filesystem access should remain a constrained fallback.
+- Hermes Agent exposes ACP, JSON-RPC/WebSocket and HTTP/SSE integration surfaces, including lifecycle and approval events, but current repository issues show that approval semantics and command-risk coverage are evolving. Do not embed Hermes internals directly; evaluate it as an external runtime adapter after Auaka defines its own immutable tool policy and server-side approval record.
+- Agent framework approval is not an authorization boundary. Auaka must enforce path scope, action allowlists, optimistic concurrency, and approval tokens inside its own tool layer regardless of framework choice.
+- MVP-2.0 has three correctness blockers: startup does not enforce query/index model and revision compatibility; vectors and metadata are not atomically published as one generation; title-only changes can reuse stale vectors because reuse lacks an exact `embedding_input_hash`.
+- Additional MVP-2.0 hardening required before MVP-3: strict cache validation and checksums, empty-index handling, Vault snapshot/writer coordination, bounded retrieval concurrency and request sizes, structured error sanitization, enforced loopback privacy, retrieval provenance/health endpoints, Markdown edge-case tests, and pinned dependency/model revisions.
+- OSS shortlist judgment: adopt a small MIT One Euro Filter implementation or vendor an attributed implementation behind `PointerFilter`; wrap `whisper.cpp`, Pydantic AI Slim, and Obsidian Local REST API behind Auaka-owned interfaces; defer LangGraph; reject LlamaIndex and a generic MCP filesystem server for this scope.
+- `sqlite-vec` and FastEmbed are candidates, not automatic replacements. The current exact NumPy cosine path is already appropriate for the frozen 100–1,000-note MVP scale; migration requires benchmark evidence and a separate approved design because replacing BGE-M3 or storage can change retrieval semantics.

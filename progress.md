@@ -1,5 +1,13 @@
 # Auaka System — Progress Log
 
+## 2026-08-19 — MVP-1.5 → MVP-3 program kickoff
+
+- Created and pushed `codex/interaction-calibration-v1.1` from the immutable `v1.0.0` release.
+- Prepared isolated Node and Python environments. Frontend baseline: 35 Vitest tests and TypeScript check passed. Pipeline baseline: 36 tests passed and 1 opt-in real-model test skipped; the deterministic UMAP/Numba test remains a known long first-compilation path on Windows.
+- User authorized multi-agent parallel development and reuse of maintained GitHub open-source modules subject to main-agent review.
+- Started three read-only audits in parallel: MVP-1.5 interaction gaps, MVP-2.0 retrieval correctness/readiness, and reusable open-source module candidates with license/maintenance checks.
+- No implementation will begin until the staged design is presented and approved.
+
 ## 2026-08-17
 
 - Completed MVP intent interview.
@@ -211,3 +219,17 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Final frontend verification: 35 Vitest tests passed across 12 files, `npx tsc --noEmit` passed, `git diff --check` passed, and the production Vite build passed with only the existing Three.js chunk-size warning.
 - The preview preserves mirrored video, shows normalized MediaPipe landmarks in a transparent Canvas, reports the valid hand count, and clears the overlay when tracking stops or returns to mouse mode.
 - Manual acceptance remains: enable the camera, confirm one hand shows 21 connected points and `Hands detected: 1`, then click **Close camera · mouse mode** and confirm mouse orbit/selection continue working.
+# 2026-08-19 Audit progress update
+
+- User approved selfie-mirrored preview with explicit same-direction screen-pointer mapping.
+- MVP-1.5 read-only interaction audit completed; verified code-level causes and proposed measurable acceptance criteria.
+- MVP-2.0 retrieval audit completed; three silent correctness defects block promotion to MVP-2.0 and MVP-3 integration.
+- Open-source shortlist completed and main-agent review begun; no third-party code has been copied or installed.
+- Implementation remains intentionally paused until the interaction convention and staged design are approved.
+
+## 2026-08-19 — MVP-1.5 design accepted
+
+- User approved the major architecture and delegated minor implementation/parameter decisions to the main agent.
+- Added the accepted MVP-1.5 interaction-calibration design, implementation plan, and checklist.
+- Independent design review found no critical issue; all four important findings were incorporated.
+- Implementation is now authorized to proceed continuously under TDD with automatic spec and quality review gates.

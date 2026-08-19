@@ -1,8 +1,14 @@
-# Auaka System — MVP-1 Task Plan
+# Auaka System — MVP-1.5 → MVP-3 Task Plan
 
 ## Goal
 
-Build a gesture-controlled personal knowledge space that reads a real Obsidian Markdown vault, embeds notes at note level, projects them into a semantic 3D layout with UMAP, and renders/interacts with the result in Three.js.
+Advance the released `v1.0.0` baseline through three controlled gates: stabilize spatial hand interaction as MVP-1.5, audit and harden the existing Chunk Retrieval foundation into MVP-2.0 readiness, then design and implement MVP-3 Agent actions only when the retrieval contract is sound. Prefer maintained, license-compatible open-source modules behind Auaka-owned adapters instead of embedding third-party internals directly into core domain code.
+
+## Current Branch
+
+- Branch: `codex/interaction-calibration-v1.1`
+- Base: `v1.0.0` / `7d14996`
+- Worktree: `D:\1job\Auaka System\.worktrees\interaction-calibration-v1.1`
 
 ## Frozen MVP-1 Scope
 
@@ -43,6 +49,26 @@ Build a gesture-controlled personal knowledge space that reads a real Obsidian M
 | 6. Incremental implementation | in_progress | Vertical slices for ingestion, projection, rendering, and gestures complete |
 | 7. Systematic debugging and code review | pending | Runtime issues resolved and review findings addressed |
 | 8. Verification before completion | pending | Acceptance demo passes with a real or representative vault |
+
+## MVP-1.5 → MVP-3 Program Status
+
+| Gate | Status | Exit criterion |
+|---|---|---|
+| A. Current-code and dependency audit | completed | MVP-1.5 gaps, MVP-2.0 defects, reusable modules, licenses, and integration risks are documented |
+| B. MVP-1.5 design | completed | Pointer, mirror mapping, Pinch, two-hand navigation, telemetry, and replay behavior are approved |
+| C. MVP-1.5 implementation | in_progress | Interaction acceptance metrics and real-camera checks pass |
+| D. MVP-2.0 readiness review | pending | Retrieval correctness, API boundaries, persistence, incremental updates, security, and performance have no blocking defects |
+| E. MVP-2.0 hardening | pending | All blocking findings are fixed and regression-tested |
+| F. MVP-3 design | pending | Agent runtime, tool contracts, permissions, Vault mutation, provenance, rollback, and re-index loop are approved |
+| G. MVP-3 implementation | pending | Agent can retrieve, create a reviewed note, trigger incremental indexing, and surface the new node with an auditable trace |
+
+## Multi-Agent Coordination Rules
+
+- Parallelize only independent research or disjoint write sets.
+- Sub-agents do not commit, push, tag, merge, or alter shared planning files.
+- `GestureEngine.ts`, public contracts, package manifests, and final integration remain owned by the main agent unless explicitly isolated.
+- The main agent reviews license, maintenance health, security, API fit, code quality, tests, and full-suite behavior before accepting any third-party module or sub-agent patch.
+- Open-source dependencies must be wrapped behind Auaka-owned adapters so they remain replaceable.
 
 ## Acceptance Criteria
 
