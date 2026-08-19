@@ -233,3 +233,11 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added the accepted MVP-1.5 interaction-calibration design, implementation plan, and checklist.
 - Independent design review found no critical issue; all four important findings were incorporated.
 - Implementation is now authorized to proceed continuously under TDD with automatic spec and quality review gates.
+
+## 2026-08-20 — MVP-1.5 Task 1 complete
+
+- Added canonical `HandFrame` / `TrackedHand` contracts with timestamp, dimensions, handedness, confidence, and validated 21-point landmarks.
+- Added explicit raw-camera → selfie-mirrored display → viewport/NDC coordinate mapping while preserving raw coordinates for the mirrored landmark overlay.
+- Added current/deprecated MediaPipe handedness compatibility and original-index metadata alignment.
+- Quality review findings for invalid frame metadata and coordinate overshoot were fixed and re-reviewed as approved.
+- Verification: 57 frontend tests passed, TypeScript passed, and Vite production build passed. Existing bundle-size warning remains nonblocking.

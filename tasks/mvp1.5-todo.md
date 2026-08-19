@@ -1,6 +1,6 @@
 # MVP-1.5 Todo
 
-- [ ] Task 1: Canonical hand-frame and coordinate contracts
+- [x] Task 1: Canonical hand-frame and coordinate contracts
 - [ ] Task 2: Versioned calibration profile
 - [ ] Checkpoint: contracts/profile review
 - [ ] Task 3: Visible filtered pointer

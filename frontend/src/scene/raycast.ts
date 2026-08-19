@@ -1,8 +1,10 @@
 import * as THREE from "three";
+import { displayPointToNdc } from "../hand/CoordinateMapper";
 import type { NodeMesh } from "./nodes";
 
 export function normalizedPointerToNdc(x: number, y: number): THREE.Vector2 {
-  return new THREE.Vector2(x * 2 - 1, 1 - y * 2);
+  const ndc = displayPointToNdc({ x, y });
+  return new THREE.Vector2(ndc.x, ndc.y);
 }
 
 export function pickNode(

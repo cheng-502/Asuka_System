@@ -9,6 +9,11 @@ describe("scene interaction helpers", () => {
     expect(normalizedPointerToNdc(1, 1)).toEqual({ x: 1, y: -1 });
   });
 
+  it("clamps finite pointer coordinates and rejects non-finite values", () => {
+    expect(normalizedPointerToNdc(-0.5, 1.5)).toEqual({ x: -1, y: -1 });
+    expect(() => normalizedPointerToNdc(Number.NaN, 0.5)).toThrow(RangeError);
+  });
+
   it("uses solid Wikilinks, dashed semantic links, and hides non-renderable links", () => {
     expect(edgeVisualStyle({ source: "a", target: "b", types: ["wikilink"] })).toBe("solid");
     expect(edgeVisualStyle({ source: "a", target: "b", types: ["semantic"], similarity: 0.8 })).toBe("dashed");

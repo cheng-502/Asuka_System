@@ -4,6 +4,7 @@ import { loadArtifact } from "./data/loadArtifact";
 import { KnowledgeScene } from "./scene/KnowledgeScene";
 import { GestureEngine } from "./hand/GestureEngine";
 import { HandTracker } from "./hand/HandTracker";
+import { mirrorHandLandmarks } from "./hand/CoordinateMapper";
 import { InteractionController } from "./app/InteractionController";
 import { DetailPanel } from "./ui/DetailPanel";
 import { CameraPreview } from "./ui/CameraPreview";
@@ -71,9 +72,14 @@ async function boot(): Promise<void> {
       ? new CameraPreview(cameraRoot, () => void startCamera(), stopCamera)
       : null;
     tracker = new HandTracker({
-      onLandmarks: (landmarks) => {
-        cameraPreview?.setLandmarks(landmarks);
-        for (const event of gestureEngine.update(landmarks)) interaction.handle(event);
+      onFrame: (frame) => {
+        const rawHands = frame.hands.map((hand) => hand.landmarks);
+        cameraPreview?.setLandmarks(rawHands.length ? rawHands : null);
+        const displayHands = rawHands.map(mirrorHandLandmarks);
+        for (const event of gestureEngine.update(
+          displayHands.length ? displayHands : null,
+          frame.timestampMs,
+        )) interaction.handle(event);
       },
       onStatus: (message) => cameraPreview?.setStatus(message),
     });

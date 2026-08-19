@@ -1,8 +1,6 @@
-export interface HandLandmark {
-  x: number;
-  y: number;
-  z?: number;
-}
+import type { NormalizedLandmark } from "./HandFrame";
+
+export type HandLandmark = NormalizedLandmark;
 
 export type HandLandmarks = readonly HandLandmark[];
 export type GestureInput = HandLandmarks | readonly HandLandmarks[] | null;

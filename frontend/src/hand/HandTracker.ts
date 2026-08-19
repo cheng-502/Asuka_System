@@ -3,7 +3,12 @@ import {
   HandLandmarker,
   type HandLandmarkerResult,
 } from "@mediapipe/tasks-vision";
-import type { HandLandmark, HandLandmarks } from "./GestureEngine";
+import type {
+  HandFrame,
+  Handedness,
+  NormalizedLandmark,
+  TrackedHand,
+} from "./HandFrame";
 
 export const DEFAULT_HAND_MODEL_PATH = "/models/hand_landmarker.task";
 export const DEFAULT_WASM_PATH = "/wasm";
@@ -12,7 +17,7 @@ export const MAX_HANDS = 2;
 export interface HandTrackerOptions {
   modelPath?: string;
   wasmPath?: string;
-  onLandmarks: (landmarks: HandLandmarks[] | null) => void;
+  onFrame: (frame: HandFrame) => void;
   onStatus?: (message: string) => void;
 }
 
@@ -77,14 +82,54 @@ export class HandTracker {
   private readonly tick = (): void => {
     if (!this.running || !this.video || !this.landmarker) return;
     if (this.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const result = this.landmarker.detectForVideo(this.video, performance.now());
-      this.options.onLandmarks(firstHandLandmarks(result));
+      const timestampMs = performance.now();
+      const result = this.landmarker.detectForVideo(this.video, timestampMs);
+      const frame = handFrameFromResult(
+        result,
+        timestampMs,
+        this.video.videoWidth || 640,
+        this.video.videoHeight || 480,
+      );
+      if (frame) this.options.onFrame(frame);
     }
     if (this.running) this.animationFrame = requestAnimationFrame(this.tick);
   };
 }
 
-export function firstHandLandmarks(result: HandLandmarkerResult): HandLandmarks[] | null {
-  if (!result.landmarks.length) return null;
-  return result.landmarks.map((landmarks) => landmarks.map(({ x, y, z }) => ({ x, y, z })));
+export function handFrameFromResult(
+  result: HandLandmarkerResult,
+  timestampMs: number,
+  frameWidth: number,
+  frameHeight: number,
+): HandFrame | null {
+  if (!Number.isFinite(timestampMs) || timestampMs < 0
+    || !Number.isFinite(frameWidth) || frameWidth <= 0
+    || !Number.isFinite(frameHeight) || frameHeight <= 0) return null;
+
+  const hands = result.landmarks.flatMap((landmarks, index): TrackedHand[] => {
+    const normalized = landmarks.map(({ x, y, z }) => ({ x, y, z }));
+    if (normalized.length !== 21 || !normalized.every(isValidLandmark)) return [];
+    const category = result.handedness?.[index]?.[0] ?? result.handednesses?.[index]?.[0];
+    return [{
+      landmarks: normalized,
+      handedness: normalizeHandedness(category?.categoryName),
+      confidence: Number.isFinite(category?.score) ? clamp01(category.score) : 0,
+    }];
+  });
+
+  return { timestampMs, frameWidth, frameHeight, hands };
+}
+
+function normalizeHandedness(value: string | undefined): Handedness {
+  return value === "Left" || value === "Right" ? value : "Unknown";
+}
+
+function isValidLandmark(landmark: NormalizedLandmark): boolean {
+  return Number.isFinite(landmark.x)
+    && Number.isFinite(landmark.y)
+    && (landmark.z === undefined || Number.isFinite(landmark.z));
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
