@@ -68,6 +68,11 @@ describe("interaction calibration profile", () => {
       pointerBeta: 0.007,
       pointerDerivativeCutoff: 1,
       pointerDeadzonePx: 4,
+      pinchEnterRatio: 0.32,
+      pinchReleaseRatio: 0.48,
+      pinchActivationMs: 120,
+      pinchCooldownMs: 150,
+      pinchPalmEpsilon: 0.01,
     });
   });
 

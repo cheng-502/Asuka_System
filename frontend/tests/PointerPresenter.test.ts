@@ -65,9 +65,12 @@ describe("PointerPresenter", () => {
     presenter.show(0.5, 0.5);
     presenter.setHovered(true);
     expect(container.children[0].className).toContain("is-hovering");
+    presenter.setPinching(true);
+    expect(container.children[0].className).toContain("is-pinching");
     presenter.hide();
     expect(container.children[0].hidden).toBe(true);
     expect(container.children[0].className).not.toContain("is-hovering");
+    expect(container.children[0].className).not.toContain("is-pinching");
     vi.unstubAllGlobals();
   });
 });

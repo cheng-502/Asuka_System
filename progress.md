@@ -259,3 +259,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Invalid zero-hand and multi-hand frames hide the one-hand pointer immediately, preventing stale pointer residue while preserving mouse mode.
 - Browser smoke verification found no console warnings/errors; independent specification review passed and quality review approved after the hand-count transition fix.
 - Verification: 78 frontend tests passed, TypeScript passed, Vite production build passed, and `git diff --check` passed. The existing Three.js bundle-size warning remains nonblocking.
+
+## 2026-08-20 — MVP-1.5 Task 4 complete
+
+- Replaced fixed pinch distance and frame counting with a palm-normalized, elapsed-time state machine driven by the versioned calibration profile.
+- Added separate enter/release ratios, activation time, cooldown, single-event selection semantics, and an explicit pressed/released pointer visual state.
+- Landmark dropout, hand-mode changes, timestamp rollback, and invalid timestamps cancel safely and require an observed release before re-arming.
+- Empty-space pinch now preserves the current selection instead of clearing it.
+- Independent specification and code-quality reviews passed after state-machine safety fixes.
+- Verification: 87 frontend tests passed. TypeScript, production build, browser smoke, and `git diff --check` passed; the existing Three.js bundle-size warning remains nonblocking.

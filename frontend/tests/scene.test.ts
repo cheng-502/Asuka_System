@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { edgeVisualStyle } from "../src/scene/edges";
-import { normalizedPointerToNdc } from "../src/scene/raycast";
+import { nextPinchSelection, normalizedPointerToNdc } from "../src/scene/raycast";
 
 describe("scene interaction helpers", () => {
   it("maps normalized screen coordinates to Three.js NDC", () => {
@@ -12,6 +12,12 @@ describe("scene interaction helpers", () => {
   it("clamps finite pointer coordinates and rejects non-finite values", () => {
     expect(normalizedPointerToNdc(-0.5, 1.5)).toEqual({ x: -1, y: -1 });
     expect(() => normalizedPointerToNdc(Number.NaN, 0.5)).toThrow(RangeError);
+  });
+
+  it("preserves the current selection when a pinch lands on empty space", () => {
+    expect(nextPinchSelection("selected-note", null)).toBe("selected-note");
+    expect(nextPinchSelection("selected-note", "hovered-note")).toBe("hovered-note");
+    expect(nextPinchSelection(null, null)).toBeNull();
   });
 
   it("uses solid Wikilinks, dashed semantic links, and hides non-renderable links", () => {

@@ -10,6 +10,7 @@ export function shouldShowPointerForHandCount(handCount: number): boolean {
 export class PointerPresenter {
   readonly element: HTMLDivElement;
   private hovered = false;
+  private pinching = false;
 
   constructor(container: HTMLElement, config: PointerPresenterConfig) {
     this.element = document.createElement("div");
@@ -37,14 +38,20 @@ export class PointerPresenter {
     this.updateClassName();
   }
 
+  setPinching(pinching: boolean): void {
+    this.pinching = pinching;
+    this.updateClassName();
+  }
+
   hide(): void {
     this.hovered = false;
+    this.pinching = false;
     this.element.hidden = true;
     this.updateClassName();
   }
 
   private updateClassName(): void {
-    this.element.className = `hand-pointer${this.hovered ? " is-hovering" : ""}`;
+    this.element.className = `hand-pointer${this.hovered ? " is-hovering" : ""}${this.pinching ? " is-pinching" : ""}`;
   }
 }
 

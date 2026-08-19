@@ -1,5 +1,6 @@
 import type { NormalizedLandmark } from "./HandFrame";
 import { PointerFilter, type PointerViewport } from "./PointerFilter";
+import { PinchStateMachine } from "./PinchStateMachine";
 
 export type HandLandmark = NormalizedLandmark;
 
@@ -9,6 +10,7 @@ export type GestureInput = HandLandmarks | readonly HandLandmarks[] | null;
 export type GestureEvent =
   | { type: "pointer"; x: number; y: number }
   | { type: "pinch"; x: number; y: number }
+  | { type: "pinch_state"; active: boolean }
   | { type: "open_palm" }
   | { type: "no_hand" }
   | { type: "auto_exit" }
@@ -20,8 +22,11 @@ export interface GestureConfig {
   pointerBeta: number;
   pointerDerivativeCutoff: number;
   pointerDeadzonePx: number;
-  pinchDistance: number;
-  pinchStableFrames: number;
+  pinchEnterRatio: number;
+  pinchReleaseRatio: number;
+  pinchActivationMs: number;
+  pinchCooldownMs: number;
+  pinchPalmEpsilon: number;
   openPalmStableFrames: number;
   noHandTimeoutFrames: number;
   autoExitTimeoutMs: number;
@@ -34,8 +39,11 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   pointerBeta: 0.007,
   pointerDerivativeCutoff: 1,
   pointerDeadzonePx: 4,
-  pinchDistance: 0.08,
-  pinchStableFrames: 3,
+  pinchEnterRatio: 0.32,
+  pinchReleaseRatio: 0.48,
+  pinchActivationMs: 120,
+  pinchCooldownMs: 150,
+  pinchPalmEpsilon: 0.01,
   openPalmStableFrames: 3,
   noHandTimeoutFrames: 8,
   autoExitTimeoutMs: 15_000,
@@ -46,8 +54,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
 export class GestureEngine {
   private readonly config: GestureConfig;
   private readonly pointerFilter: PointerFilter;
-  private pinchFrames = 0;
-  private pinchActive = false;
+  private readonly pinchStateMachine: PinchStateMachine;
   private openPalmFrames = 0;
   private openPalmActive = false;
   private noHandFrames = 0;
@@ -65,6 +72,13 @@ export class GestureEngine {
       derivativeCutoff: this.config.pointerDerivativeCutoff,
       deadzonePx: this.config.pointerDeadzonePx,
     });
+    this.pinchStateMachine = new PinchStateMachine({
+      enterRatio: this.config.pinchEnterRatio,
+      releaseRatio: this.config.pinchReleaseRatio,
+      activationMs: this.config.pinchActivationMs,
+      cooldownMs: this.config.pinchCooldownMs,
+      palmEpsilon: this.config.pinchPalmEpsilon,
+    });
   }
 
   update(
@@ -78,9 +92,17 @@ export class GestureEngine {
     this.noHandActive = false;
     this.noHandSince = null;
     this.autoExitActive = false;
-    if (hands.length >= 2 && isOpenPalm(hands[0]) && isOpenPalm(hands[1])) {
-      const orderedHands = [...hands].sort((left, right) => left[8].x - right[8].x);
-      return this.handleTwoHands(orderedHands[0], orderedHands[1]);
+    if (hands.length >= 2) {
+      const cancellation = this.pinchStateMachine.update(timestamp, null);
+      const cancellationEvents: GestureEvent[] = cancellation.released
+        ? [{ type: "pinch_state", active: false }]
+        : [];
+      if (isOpenPalm(hands[0]) && isOpenPalm(hands[1])) {
+        const orderedHands = [...hands].sort((left, right) => left[8].x - right[8].x);
+        return [...cancellationEvents, ...this.handleTwoHands(orderedHands[0], orderedHands[1])];
+      }
+      this.resetTwoHandBaseline();
+      return cancellationEvents;
     }
     this.resetTwoHandBaseline();
     return this.handleSingleHand(hands[0], timestamp, viewport);
@@ -97,21 +119,10 @@ export class GestureEngine {
       viewport,
     );
     const events: GestureEvent[] = [{ type: "pointer", ...pointer }];
-    const pinching = distance(landmarks[4], landmarks[8]) <= this.config.pinchDistance;
-    const openPalm = !pinching && isOpenPalm(landmarks);
-
-    if (pinching) {
-      this.pinchFrames += 1;
-      this.openPalmFrames = 0;
-      this.openPalmActive = false;
-      if (!this.pinchActive && this.pinchFrames >= this.config.pinchStableFrames) {
-        this.pinchActive = true;
-        events.push({ type: "pinch", ...pointer });
-      }
-    } else {
-      this.pinchFrames = 0;
-      this.pinchActive = false;
-    }
+    const pinch = this.pinchStateMachine.update(timestamp, landmarks);
+    const openPalm = !pinch.active && isOpenPalm(landmarks);
+    if (pinch.activated) events.push({ type: "pinch_state", active: true }, { type: "pinch", ...pointer });
+    if (pinch.released) events.push({ type: "pinch_state", active: false });
 
     if (openPalm) {
       this.openPalmFrames += 1;
@@ -128,8 +139,7 @@ export class GestureEngine {
 
   reset(): void {
     this.pointerFilter.reset();
-    this.pinchFrames = 0;
-    this.pinchActive = false;
+    this.pinchStateMachine.reset();
     this.openPalmFrames = 0;
     this.openPalmActive = false;
     this.noHandFrames = 0;
@@ -141,13 +151,12 @@ export class GestureEngine {
 
   private handleNoHand(timestamp = performance.now()): GestureEvent[] {
     if (this.noHandSince === null) this.noHandSince = timestamp;
-    this.pinchFrames = 0;
-    this.pinchActive = false;
+    const pinch = this.pinchStateMachine.update(timestamp, null);
     this.openPalmFrames = 0;
     this.openPalmActive = false;
     this.resetTwoHandBaseline();
     this.noHandFrames += 1;
-    const events: GestureEvent[] = [];
+    const events: GestureEvent[] = pinch.released ? [{ type: "pinch_state", active: false }] : [];
     if (!this.noHandActive && this.noHandFrames >= this.config.noHandTimeoutFrames) {
       this.noHandActive = true;
       this.pointerFilter.reset();

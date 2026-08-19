@@ -3,7 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { KnowledgeSpaceArtifact } from "../data/types";
 import { createRelationshipEdges } from "./edges";
 import { createNodeMeshes, setNodeState, type NodeMesh } from "./nodes";
-import { normalizedPointerToNdc, pickNode } from "./raycast";
+import { nextPinchSelection, normalizedPointerToNdc, pickNode } from "./raycast";
 import { calculateCameraFrame } from "./cameraFrame";
 
 export class KnowledgeScene {
@@ -128,7 +128,8 @@ export class KnowledgeScene {
 
   selectAtPointer(normalizedX: number, normalizedY: number): void {
     this.setPointer(normalizedX, normalizedY);
-    this.selectNode(this.hoveredNodeId);
+    const nextSelection = nextPinchSelection(this.selectedNodeId, this.hoveredNodeId);
+    if (nextSelection !== this.selectedNodeId) this.selectNode(nextSelection);
   }
 
   selectNode(nodeId: string | null): void {

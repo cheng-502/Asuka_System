@@ -7,6 +7,13 @@ export function normalizedPointerToNdc(x: number, y: number): THREE.Vector2 {
   return new THREE.Vector2(ndc.x, ndc.y);
 }
 
+export function nextPinchSelection(
+  selectedNodeId: string | null,
+  hoveredNodeId: string | null,
+): string | null {
+  return hoveredNodeId ?? selectedNodeId;
+}
+
 export function pickNode(
   camera: THREE.Camera,
   pointer: THREE.Vector2,

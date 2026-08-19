@@ -4,7 +4,7 @@
 - [x] Task 2: Versioned calibration profile
 - [x] Checkpoint: contracts/profile review
 - [x] Task 3: Visible filtered pointer
-- [ ] Task 4: Palm-normalized pinch state machine
+- [x] Task 4: Palm-normalized pinch state machine
 - [ ] Checkpoint: one-hand interaction browser check
 - [ ] Task 5: Open Palm and two-hand baseline transforms
 - [ ] Task 6: Trace replay and metrics

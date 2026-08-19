@@ -103,6 +103,7 @@ async function boot(): Promise<void> {
           { width: window.innerWidth, height: window.innerHeight },
         )) {
           if (event.type === "pointer") pointerPresenter?.show(event.x, event.y);
+          if (event.type === "pinch_state") pointerPresenter?.setPinching(event.active);
           if (event.type === "no_hand" || event.type === "auto_exit") pointerPresenter?.hide();
           interaction.handle(event);
         }

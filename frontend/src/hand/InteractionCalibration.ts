@@ -78,6 +78,11 @@ export function gestureConfigFromCalibration(
   | "pointerBeta"
   | "pointerDerivativeCutoff"
   | "pointerDeadzonePx"
+  | "pinchEnterRatio"
+  | "pinchReleaseRatio"
+  | "pinchActivationMs"
+  | "pinchCooldownMs"
+  | "pinchPalmEpsilon"
 > {
   return {
     autoExitTimeoutMs: profile.tracking.auto_exit_ms,
@@ -85,6 +90,11 @@ export function gestureConfigFromCalibration(
     pointerBeta: profile.pointer.beta,
     pointerDerivativeCutoff: profile.pointer.derivative_cutoff,
     pointerDeadzonePx: profile.pointer.deadzone_px,
+    pinchEnterRatio: profile.pinch.enter_ratio,
+    pinchReleaseRatio: profile.pinch.release_ratio,
+    pinchActivationMs: profile.pinch.activation_ms,
+    pinchCooldownMs: profile.pinch.cooldown_ms,
+    pinchPalmEpsilon: profile.pinch.palm_epsilon,
   };
 }
 

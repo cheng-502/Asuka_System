@@ -15,6 +15,15 @@ function openPalm(indexX: number, indexY = 0.2): HandLandmark[] {
   });
 }
 
+function pinchHand(palmScale: number, pinchRatio: number): HandLandmark[] {
+  return landmarks({
+    0: { x: 0.5, y: 0.7 },
+    9: { x: 0.5, y: 0.7 - palmScale },
+    4: { x: 0.5, y: 0.3 },
+    8: { x: 0.5 + palmScale * pinchRatio, y: 0.3 },
+  });
+}
+
 describe("GestureEngine", () => {
   it("emits a timestamp-filtered screen-space Pointer", () => {
     const engine = new GestureEngine({ pointerDeadzonePx: 0 });
@@ -42,16 +51,34 @@ describe("GestureEngine", () => {
     });
   });
 
-  it("fires Pinch once after stable frames and retriggers after release", () => {
-    const engine = new GestureEngine({ pinchStableFrames: 2 });
-    const pinched = landmarks({ 4: { x: 0.2, y: 0.2 }, 8: { x: 0.22, y: 0.22 } });
-    const released = landmarks({ 4: { x: 0.8, y: 0.8 }, 8: { x: 0.2, y: 0.2 } });
-    expect(engine.update(pinched).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(pinched).map((event) => event.type)).toEqual(["pointer", "pinch"]);
-    expect(engine.update(pinched).map((event) => event.type)).toEqual(["pointer"]);
-    engine.update(released);
-    expect(engine.update(pinched).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(pinched).map((event) => event.type)).toEqual(["pointer", "pinch"]);
+  it("fires one palm-normalized, time-based Pinch and retriggers after release/cooldown", () => {
+    const engine = new GestureEngine({
+      pinchActivationMs: 120,
+      pinchCooldownMs: 150,
+      pinchEnterRatio: 0.32,
+      pinchReleaseRatio: 0.48,
+    });
+    expect(engine.update(pinchHand(0.1, 0.25), 0).map((event) => event.type)).toEqual(["pointer"]);
+    expect(engine.update(pinchHand(0.25, 0.25), 120).map((event) => event.type)).toEqual([
+      "pointer", "pinch_state", "pinch",
+    ]);
+    expect(engine.update(pinchHand(0.15, 0.40), 140).map((event) => event.type)).toEqual(["pointer"]);
+    expect(engine.update(pinchHand(0.15, 0.50), 160).map((event) => event.type)).toEqual([
+      "pointer", "pinch_state",
+    ]);
+    expect(engine.update(pinchHand(0.15, 0.25), 300).map((event) => event.type)).toEqual(["pointer"]);
+    engine.update(pinchHand(0.15, 0.25), 310);
+    expect(engine.update(pinchHand(0.15, 0.25), 430).map((event) => event.type)).toEqual([
+      "pointer", "pinch_state", "pinch",
+    ]);
+  });
+
+  it("cancels active pinch state immediately when landmarks drop out", () => {
+    const engine = new GestureEngine({ pinchActivationMs: 0 });
+    expect(engine.update(pinchHand(0.15, 0.2), 0).map((event) => event.type)).toEqual([
+      "pointer", "pinch_state", "pinch",
+    ]);
+    expect(engine.update(null, 16).map((event) => event.type)).toEqual(["pinch_state"]);
   });
 
   it("fires Open Palm once after stable frames", () => {
