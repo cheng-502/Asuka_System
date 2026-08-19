@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "profile_id": "mvp1.5-default",
+  "coordinates": { "preview_mirrored": true, "interaction_mirror_x": true },
+  "tracking": { "min_confidence": 0.6, "dropout_grace_ms": 150, "auto_exit_ms": 15000 },
+  "pointer": {
+    "min_cutoff": 1.0,
+    "beta": 0.007,
+    "derivative_cutoff": 1.0,
+    "deadzone_px": 4,
+    "cursor_diameter_px": 12,
+    "hit_radius_px": 24
+  },
+  "pinch": {
+    "enter_ratio": 0.32,
+    "release_ratio": 0.48,
+    "activation_ms": 120,
+    "cooldown_ms": 150,
+    "palm_epsilon": 0.01
+  },
+  "open_palm": { "activation_ms": 250, "cooldown_ms": 500 },
+  "two_hand": {
+    "activation_ms": 200,
+    "zoom_deadzone_ratio": 0.03,
+    "rotation_deadzone_degrees": 3,
+    "max_zoom_rate_per_second": 1.0,
+    "max_rotation_rate_degrees_per_second": 120,
+    "dropout_grace_ms": 150
+  }
+}

@@ -241,3 +241,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added current/deprecated MediaPipe handedness compatibility and original-index metadata alignment.
 - Quality review findings for invalid frame metadata and coordinate overshoot were fixed and re-reviewed as approved.
 - Verification: 57 frontend tests passed, TypeScript passed, and Vite production build passed. Existing bundle-size warning remains nonblocking.
+
+## 2026-08-20 — MVP-1.5 Task 2 complete
+
+- Added versioned `interaction-calibration.v1.json` and a strict JSON Schema covering coordinates, tracking, pointer, pinch, Open Palm, two-hand transforms, and auto-exit.
+- Added deep runtime freezing, deeply readonly public types, relationship validation, and safe default fallback with a warning signal.
+- Runtime boot now loads the optional profile and maps only the already-compatible 15-second auto-exit parameter; future gesture tasks consume the remaining fields.
+- Optional profile loading has a 1.5-second timeout covering request, response body, and validation, so a stalled config cannot block mouse/scene startup.
+- Spec review passed; quality findings were fixed and final quality review approved.
+- Verification: 70 frontend tests passed, TypeScript passed, and Vite production build passed. Existing bundle-size warning remains nonblocking.

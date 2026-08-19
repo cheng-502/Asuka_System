@@ -5,6 +5,10 @@ import { KnowledgeScene } from "./scene/KnowledgeScene";
 import { GestureEngine } from "./hand/GestureEngine";
 import { HandTracker } from "./hand/HandTracker";
 import { mirrorHandLandmarks } from "./hand/CoordinateMapper";
+import {
+  gestureConfigFromCalibration,
+  loadInteractionCalibration,
+} from "./hand/InteractionCalibration";
 import { InteractionController } from "./app/InteractionController";
 import { DetailPanel } from "./ui/DetailPanel";
 import { CameraPreview } from "./ui/CameraPreview";
@@ -43,7 +47,10 @@ async function boot(): Promise<void> {
 
   try {
     const artifactPath = new URLSearchParams(window.location.search).get("artifact") ?? "/data/knowledge-space.json";
-    const artifact = await loadArtifact(artifactPath);
+    const [artifact, calibrationResult] = await Promise.all([
+      loadArtifact(artifactPath),
+      loadInteractionCalibration(),
+    ]);
     const detailRoot = document.querySelector<HTMLElement>("#detail-root");
     const cameraRoot = document.querySelector<HTMLElement>("#camera-root");
     const guideRoot = document.querySelector<HTMLElement>("#guide-root");
@@ -52,7 +59,9 @@ async function boot(): Promise<void> {
     const scene = new KnowledgeScene(sceneRoot, artifact, {
       onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
     });
-    const gestureEngine = new GestureEngine();
+    const gestureEngine = new GestureEngine(
+      gestureConfigFromCalibration(calibrationResult.profile),
+    );
     let cameraPreview: CameraPreview | null = null;
     let tracker: HandTracker | null = null;
 
@@ -71,6 +80,9 @@ async function boot(): Promise<void> {
     cameraPreview = cameraRoot
       ? new CameraPreview(cameraRoot, () => void startCamera(), stopCamera)
       : null;
+    if (calibrationResult.warning) {
+      cameraPreview?.setStatus("Default interaction calibration active");
+    }
     tracker = new HandTracker({
       onFrame: (frame) => {
         const rawHands = frame.hands.map((hand) => hand.landmarks);

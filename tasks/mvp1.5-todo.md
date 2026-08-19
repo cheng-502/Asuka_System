@@ -1,8 +1,8 @@
 # MVP-1.5 Todo
 
 - [x] Task 1: Canonical hand-frame and coordinate contracts
-- [ ] Task 2: Versioned calibration profile
-- [ ] Checkpoint: contracts/profile review
+- [x] Task 2: Versioned calibration profile
+- [x] Checkpoint: contracts/profile review
 - [ ] Task 3: Visible filtered pointer
 - [ ] Task 4: Palm-normalized pinch state machine
 - [ ] Checkpoint: one-hand interaction browser check
