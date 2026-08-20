@@ -12,8 +12,8 @@
 - [x] Task 7: Dynamic edges and relationship visibility
 - [x] Checkpoint C: Animated scene review
 - [x] Task 8: Dual-view control and right toolbar
-- [ ] Task 9a: Compact collapse/expand transition
-- [ ] Task 9b: Rotation scheduler and interaction ownership
+- [x] Task 9a: Compact collapse/expand transition
+- [x] Task 9b: Rotation scheduler and interaction ownership
 - [ ] Task 10: Real 351-note Artifact, profiling, and release verification
 - [ ] Checkpoint D: Final specification and quality review
 - [ ] Push completed branch to GitHub

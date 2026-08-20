@@ -7,7 +7,7 @@ import { ViewControls, viewControlAvailability } from "../src/ui/ViewControls";
 import { vi } from "vitest";
 
 describe("view control availability", () => {
-  it("keeps legacy v1 semantic-only and leaves collapse disabled until Task 9a", () => {
+  it("keeps legacy v1 semantic-only and enables compact capability for nonempty v2", () => {
     expect(viewControlAvailability(normalizeArtifact(v1Fixture))).toEqual({
       semantic: true,
       galaxy: false,
@@ -16,7 +16,7 @@ describe("view control availability", () => {
     expect(viewControlAvailability(normalizeArtifact(v2Fixture))).toEqual({
       semantic: true,
       galaxy: true,
-      collapse: false,
+      collapse: true,
     });
   });
 
@@ -49,11 +49,21 @@ describe("view control availability", () => {
 
     expect(view.children[0].attributes["aria-pressed"]).toBe("true");
     expect(view.children[1].disabled).toBe(false);
+    expect(toolbar.children[0].disabled).toBe(true);
     view.children[1].listeners.click();
     expect(onLayout).toHaveBeenCalledWith("galaxy");
+    expect(toolbar.children[0].disabled).toBe(true);
     controls.setLayout("galaxy");
     expect(view.children[1].attributes["aria-pressed"]).toBe("true");
-    expect(toolbar.children.every((button) => button.disabled && button.tabIndex === -1)).toBe(true);
+    expect(toolbar.children[0].disabled).toBe(false);
+    toolbar.children[0].listeners.click();
+    expect(onLayout).toHaveBeenCalledWith("compact");
+    controls.setLayout("compact");
+    expect(view.children[1].attributes["aria-pressed"]).toBe("true");
+    expect(toolbar.children[0].attributes["aria-label"]).toBe("展开主题星系");
+    toolbar.children[0].listeners.click();
+    expect(onLayout).toHaveBeenCalledWith("galaxy");
+    expect(toolbar.children.slice(1).every((button) => button.disabled && button.tabIndex === -1)).toBe(true);
     vi.unstubAllGlobals();
   });
 });

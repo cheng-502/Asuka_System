@@ -157,7 +157,16 @@ export function applyEdgeVisibility(
       (maximum, edge) => Math.max(maximum, visibility.get(edge.id)?.opacity ?? 0),
       0,
     );
+    batch.line.userData.baseOpacity = batch.line.material.opacity;
     markBatchUpdated(batch);
+  });
+}
+
+export function setEdgeOpacityFactor(edges: readonly SceneEdge[], factor: number): void {
+  const clamped = Math.min(Math.max(factor, 0), 1);
+  const batches = new Set(edges.map((edge) => edge.batch));
+  batches.forEach((batch) => {
+    batch.line.material.opacity = Number(batch.line.userData.baseOpacity ?? batch.line.material.opacity) * clamped;
   });
 }
 

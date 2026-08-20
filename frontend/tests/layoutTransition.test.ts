@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  COMPACT_TRANSITION_MS,
   KnowledgeLayoutState,
   RetargetableVectorTransition,
 } from "../src/scene/LayoutTransition";
@@ -59,6 +60,23 @@ describe("KnowledgeLayoutState", () => {
     expect(state.nodeIds).toEqual(["a", "b"]);
     expect(Array.from(state.current)).toEqual([10, 0, 0, 20, 0, 0]);
     expect(() => state.retarget("compact", 900, false)).toThrow("not available");
+  });
+
+  it("uses the independent 900 ms compact transition and reverses without a jump", () => {
+    const nodes = [runtimeNode("a", 0, 10)];
+    nodes[0].layouts.compact = { x: 2, y: 0, z: 0 };
+    const state = new KnowledgeLayoutState(nodes, ["semantic", "galaxy", "compact"]);
+    state.retarget("galaxy", 0, true);
+
+    state.retarget("compact", 100, false);
+    expect(COMPACT_TRANSITION_MS).toBe(900);
+    const interrupted = state.sample(550)[0];
+    state.retarget("galaxy", 550, false);
+
+    expect(state.current[0]).toBe(interrupted);
+    state.sample(1450);
+    expect(state.layout).toBe("galaxy");
+    expect(state.current[0]).toBe(10);
   });
 });
 

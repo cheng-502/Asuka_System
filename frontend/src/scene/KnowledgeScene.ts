@@ -4,6 +4,7 @@ import type { KnowledgeLayoutName, KnowledgeSpaceArtifact } from "../data/types"
 import {
   applyEdgeVisibility,
   createDynamicEdges,
+  setEdgeOpacityFactor,
   updateDynamicEdges,
   type SceneEdge,
 } from "./edges";
@@ -11,6 +12,7 @@ import {
   createNodeMeshes,
   disposeNodeMesh,
   setNodeState,
+  setOrdinaryLabelOpacity,
   updateNodeLabelVisibility,
   type NodeMesh,
 } from "./nodes";
@@ -18,10 +20,12 @@ import { nextPinchSelection, normalizedPointerToNdc, pickNode } from "./raycast"
 import { calculateCameraFrame } from "./cameraFrame";
 import {
   KnowledgeLayoutState,
+  COMPACT_TRANSITION_MS,
   LAYOUT_TRANSITION_MS,
   RetargetableVectorTransition,
 } from "./LayoutTransition";
 import { calculateEdgeVisibility } from "./visibility";
+import { AutoRotationController } from "./AutoRotationController";
 
 export class KnowledgeScene {
   readonly scene = new THREE.Scene();
@@ -32,6 +36,7 @@ export class KnowledgeScene {
   readonly layoutState: KnowledgeLayoutState;
   private readonly nodeGroup = new THREE.Group();
   private readonly edgeGroup = new THREE.Group();
+  private readonly contentGroup = new THREE.Group();
   private readonly container: HTMLElement;
   private animationFrame = 0;
   private readonly raycaster = new THREE.Raycaster();
@@ -41,8 +46,17 @@ export class KnowledgeScene {
   private readonly onSelect?: (nodeId: string | null) => void;
   private readonly onLayoutChange?: (layout: KnowledgeLayoutName) => void;
   private readonly cameraTransition: RetargetableVectorTransition;
+  private readonly labelOpacityTransition = new RetargetableVectorTransition(new Float64Array([1]));
+  private readonly edgeOpacityTransition = new RetargetableVectorTransition(new Float64Array([1]));
+  private readonly rotationTransition = new RetargetableVectorTransition(new Float64Array([0]));
   private readonly dynamicEdges: SceneEdge[];
   private readonly artifact: KnowledgeSpaceArtifact;
+  private readonly autoRotation = new AutoRotationController();
+  private readonly reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  private mouseDragging = false;
+  private handTransformActive = false;
+  private wheelActiveUntilMs = Number.NEGATIVE_INFINITY;
+  private pageHidden = document.hidden;
   private readonly controlOwners = new Set<"hand" | "layout">();
   private controlBaseState: { enabled: boolean; damping: boolean } | null = null;
 
@@ -73,7 +87,8 @@ export class KnowledgeScene {
     this.controls.enableZoom = true;
     this.controls.zoomSpeed = 1.25;
     this.controls.panSpeed = 0.8;
-    this.scene.add(this.nodeGroup, this.edgeGroup);
+    this.contentGroup.add(this.nodeGroup, this.edgeGroup);
+    this.scene.add(this.contentGroup);
     this.nodeMeshes = createNodeMeshes(artifact, this.nodeGroup);
     this.layoutState = new KnowledgeLayoutState(artifact.nodes, artifact.capabilities.layouts);
     this.dynamicEdges = createDynamicEdges(artifact, this.nodeMeshes, this.edgeGroup);
@@ -101,6 +116,10 @@ export class KnowledgeScene {
     this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
     this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
+    window.addEventListener("pointerup", this.handlePointerEnd);
+    window.addEventListener("pointercancel", this.handlePointerEnd);
+    this.renderer.domElement.addEventListener("wheel", this.handleWheel, { passive: true });
+    document.addEventListener("visibilitychange", this.handleVisibilityChange);
     this.animate(performance.now());
   }
 
@@ -110,6 +129,10 @@ export class KnowledgeScene {
     this.renderer.domElement.removeEventListener("pointermove", this.handlePointerMove);
     this.renderer.domElement.removeEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
+    window.removeEventListener("pointerup", this.handlePointerEnd);
+    window.removeEventListener("pointercancel", this.handlePointerEnd);
+    this.renderer.domElement.removeEventListener("wheel", this.handleWheel);
+    document.removeEventListener("visibilitychange", this.handleVisibilityChange);
     this.controls.dispose();
     this.nodeMeshes.forEach((mesh) => {
       disposeNodeMesh(mesh);
@@ -125,6 +148,7 @@ export class KnowledgeScene {
   }
 
   clearSelection(): void {
+    if (!shouldApplySelectionDuringLayout(this.layoutState.isTransitioning)) return;
     this.applySelectedState(null);
     this.refreshEdgeVisibility();
     this.onSelect?.(null);
@@ -135,6 +159,7 @@ export class KnowledgeScene {
   }
 
   beginHandTransform(): void {
+    this.handTransformActive = true;
     this.acquireControlOwnership("hand");
   }
 
@@ -146,6 +171,7 @@ export class KnowledgeScene {
   }
 
   endHandTransform(): void {
+    this.handTransformActive = false;
     this.releaseControlOwnership("hand");
   }
 
@@ -167,6 +193,7 @@ export class KnowledgeScene {
   }
 
   selectNode(nodeId: string | null): void {
+    if (!shouldApplySelectionDuringLayout(this.layoutState.isTransitioning)) return;
     this.applySelectedState(nodeId);
     this.refreshEdgeVisibility();
     this.onSelect?.(nodeId);
@@ -179,10 +206,46 @@ export class KnowledgeScene {
   ): void {
     const targetPositions = this.layoutState.target(layout);
     if (!Number.isFinite(timestampMs)) throw new RangeError("layout timestamp must be finite");
+    if (layout === "compact" && !canRequestCompact(this.layoutState.layout)) {
+      throw new Error("compact layout is available only after Topic Galaxy is reached");
+    }
+    const compactRelated = layout === "compact"
+      || this.layoutState.layout === "compact"
+      || this.labelOpacityTransition.current[0] < 1;
+    const durationMs = compactRelated ? COMPACT_TRANSITION_MS : LAYOUT_TRANSITION_MS;
     const targetFrame = calculateCameraFrame(positionsFromBuffer(targetPositions), this.camera.fov);
     this.acquireControlOwnership("layout");
     try {
       this.layoutState.retarget(layout, timestampMs, reducedMotion);
+      const compactTarget = layout === "compact";
+      const expandingFromCompletedCompact = !compactTarget && this.layoutState.layout === "compact";
+      if (expandingFromCompletedCompact) {
+        this.refreshEdgeVisibility(layout);
+        const completedCompactFactor = this.selectedNodeId ? 0.55 : 0;
+        this.edgeOpacityTransition.reset(new Float64Array([completedCompactFactor]));
+        setEdgeOpacityFactor(this.dynamicEdges, completedCompactFactor);
+      }
+      this.labelOpacityTransition.retarget(
+        new Float64Array([compactTarget ? 0 : 1]),
+        timestampMs,
+        durationMs,
+        reducedMotion,
+      );
+      this.edgeOpacityTransition.retarget(
+        new Float64Array([compactTarget ? (this.selectedNodeId ? 0.55 : 0) : 1]),
+        timestampMs,
+        durationMs,
+        reducedMotion,
+      );
+      this.rotationTransition.reset(new Float64Array([this.contentGroup.rotation.y]));
+      if (!compactTarget) {
+        this.rotationTransition.retarget(
+          new Float64Array([0]),
+          timestampMs,
+          durationMs,
+          reducedMotion,
+        );
+      }
       const viewDirection = this.camera.position.clone().sub(this.controls.target);
       if (viewDirection.lengthSq() === 0) viewDirection.set(0.72, 0.42, 1);
       viewDirection.normalize();
@@ -205,15 +268,18 @@ export class KnowledgeScene {
           targetFrame.far,
         ]),
         timestampMs,
-        LAYOUT_TRANSITION_MS,
+        durationMs,
         reducedMotion,
       );
       if (reducedMotion) {
         applyNodePositionBuffer(this.layoutState.nodeIds, this.layoutState.current, this.nodeMeshes);
         updateDynamicEdges(this.dynamicEdges, this.nodeMeshes);
         this.applyCameraValues(this.cameraTransition.current);
+        this.contentGroup.rotation.y = this.rotationTransition.current[0];
         this.releaseControlOwnership("layout");
         this.refreshEdgeVisibility();
+        this.edgeOpacityTransition.reset(new Float64Array([1]));
+        setEdgeOpacityFactor(this.dynamicEdges, 1);
         this.onLayoutChange?.(this.layoutState.layout);
       }
     } catch (error) {
@@ -250,7 +316,22 @@ export class KnowledgeScene {
   private readonly handlePointerLeave = (): void => this.updateHoveredNode(null);
 
   private readonly handlePointerDown = (): void => {
+    this.mouseDragging = true;
     this.selectNode(this.hoveredNodeId);
+  };
+
+  private readonly handlePointerEnd = (): void => {
+    this.mouseDragging = false;
+  };
+
+  private readonly handleWheel = (): void => {
+    this.wheelActiveUntilMs = performance.now() + 150;
+  };
+
+  private readonly handleVisibilityChange = (): void => {
+    this.pageHidden = document.hidden;
+    const timestampMs = performance.now();
+    this.autoRotation.update(timestampMs, this.autoRotationConditions(timestampMs));
   };
 
   private readonly resize = (): void => {
@@ -264,8 +345,16 @@ export class KnowledgeScene {
   private readonly animate = (timestampMs: number): void => {
     this.animationFrame = requestAnimationFrame(this.animate);
     this.applyTransitions(timestampMs);
+    const rotation = this.autoRotation.update(timestampMs, this.autoRotationConditions(timestampMs));
+    this.contentGroup.rotation.y += rotation.angleDeltaRad;
     if (shouldUpdateOrbitControls(this.controlOwners)) this.controls.update();
     updateNodeLabelVisibility(this.nodeMeshes, this.camera, this.selectedNodeId, this.hoveredNodeId);
+    setOrdinaryLabelOpacity(
+      this.nodeMeshes,
+      this.labelOpacityTransition.current[0],
+      this.selectedNodeId,
+      this.hoveredNodeId,
+    );
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -281,13 +370,24 @@ export class KnowledgeScene {
     if (cameraWasTransitioning || this.cameraTransition.active) {
       this.applyCameraValues(camera);
     }
+    this.labelOpacityTransition.sample(timestampMs);
+    const edgeOpacity = this.edgeOpacityTransition.sample(timestampMs)[0];
+    setEdgeOpacityFactor(this.dynamicEdges, edgeOpacity);
+    const rotationWasTransitioning = this.rotationTransition.active;
+    const rotation = this.rotationTransition.sample(timestampMs)[0];
+    if (rotationWasTransitioning || this.rotationTransition.active) {
+      this.contentGroup.rotation.y = rotation;
+    }
     if (
       this.controlOwners.has("layout")
       && !this.layoutState.isTransitioning
       && !this.cameraTransition.active
+      && !this.rotationTransition.active
     ) {
       this.releaseControlOwnership("layout");
       this.refreshEdgeVisibility();
+      this.edgeOpacityTransition.reset(new Float64Array([1]));
+      setEdgeOpacityFactor(this.dynamicEdges, 1);
       this.onLayoutChange?.(this.layoutState.layout);
     }
   }
@@ -305,6 +405,18 @@ export class KnowledgeScene {
       this.camera.near,
       this.camera.far,
     ]);
+  }
+
+  private autoRotationConditions(timestampMs: number) {
+    return {
+      compactTransitionComplete: this.layoutState.layout === "compact" && !this.layoutState.isTransitioning,
+      mouseDragging: this.mouseDragging,
+      wheelActive: timestampMs < this.wheelActiveUntilMs,
+      handActive: this.handTransformActive,
+      selectionActive: this.selectedNodeId !== null,
+      hidden: this.pageHidden,
+      reducedMotion: this.reducedMotionQuery.matches,
+    };
   }
 
   private applyCameraValues(values: Float64Array): void {
@@ -359,14 +471,14 @@ export class KnowledgeScene {
     this.camera.updateProjectionMatrix();
   }
 
-  private refreshEdgeVisibility(): void {
+  private refreshEdgeVisibility(layout: KnowledgeLayoutName = this.layoutState.layout): void {
     applyEdgeVisibility(
       this.dynamicEdges,
       calculateEdgeVisibility(
         this.dynamicEdges,
         this.artifact.nodes,
         this.selectedNodeId,
-        this.layoutState.layout,
+        layout,
         this.artifact.capabilities.hierarchy,
       ),
     );
@@ -382,6 +494,14 @@ export function shouldUpdateOrbitControls(
   owners: ReadonlySet<"hand" | "layout">,
 ): boolean {
   return !owners.has("layout");
+}
+
+export function canRequestCompact(currentLayout: KnowledgeLayoutName): boolean {
+  return currentLayout === "galaxy" || currentLayout === "compact";
+}
+
+export function shouldApplySelectionDuringLayout(isTransitioning: boolean): boolean {
+  return !isTransitioning;
 }
 
 export function applyNodePositionBuffer(

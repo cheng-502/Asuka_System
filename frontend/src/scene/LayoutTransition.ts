@@ -5,6 +5,7 @@ import type {
 } from "../data/types";
 
 export const LAYOUT_TRANSITION_MS = 800;
+export const COMPACT_TRANSITION_MS = 900;
 
 export class RetargetableVectorTransition {
   readonly current: Float64Array;
@@ -97,11 +98,14 @@ export class KnowledgeLayoutState {
 
   retarget(layout: KnowledgeLayoutName, timestampMs: number, reducedMotion: boolean): void {
     if (!this.available.has(layout)) throw new Error(`layout ${layout} is not available`);
+    const durationMs = layout === "compact" || this.targetLayout === "compact"
+      ? COMPACT_TRANSITION_MS
+      : LAYOUT_TRANSITION_MS;
     this.targetLayout = layout;
     this.transition.retarget(
       this.targets[layout],
       timestampMs,
-      LAYOUT_TRANSITION_MS,
+      durationMs,
       reducedMotion,
     );
     if (!this.transition.active) this.layout = layout;

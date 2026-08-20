@@ -361,3 +361,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Empty-Vault UI is driven by persisted real note count, so generated virtual Hubs cannot disguise an empty source Vault.
 - Responsive layout keeps the view switcher, camera preview, detail panel, and toolbar separated down to 320 px width.
 - Verification: 148 frontend tests, TypeScript, isolated production build, browser v2 transition smoke, 320 px overlap check, and `git diff --check` passed. Independent specification and quality reviews approved with no remaining P1/P2 findings.
+
+## 2026-08-21 — Knowledge Galaxy Tasks 9a and 9b complete
+
+- Added a 900 ms interruption-safe Compact transition with exact persisted targets, reduced-motion immediacy, ordinary-label fading, relationship-opacity fading, and exact Galaxy restoration.
+- Compact is enabled only after Topic Galaxy has actually been reached; Semantic-to-Galaxy animation no longer exposes the action prematurely.
+- Selection changes are held stable during layout transitions so batched edge visibility and opacity baselines cannot flash or jump.
+- Added a pure auto-rotation scheduler at 0.035 rad/s with a 2-second recovery delay and immediate blockers for mouse, wheel, hand, selection, page visibility, and reduced motion.
+- Compact rotation begins only after collapse completion. Visibility changes are handled outside RAF, and expansion smoothly returns accumulated rotation to zero so persisted Galaxy world coordinates are restored.
+- Verification: 165 frontend tests, TypeScript, browser state-gate/reversal/compact smoke, and `git diff --check` passed. Independent Task 9a and Task 9b reviews approved after transition-continuity and lifecycle fixes.

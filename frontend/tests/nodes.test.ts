@@ -5,6 +5,7 @@ import {
   MAX_ORDINARY_LABELS,
   nodeColor,
   nodeRadius,
+  setOrdinaryLabelOpacity,
   updateNodeLabelVisibility,
   type NodeMesh,
 } from "../src/scene/nodes";
@@ -52,6 +53,19 @@ describe("knowledge-space node sizing", () => {
   it("gives virtual hubs a distinct amber color", () => {
     expect(nodeColor({ domain: "virtual", is_virtual: true })).toBe(0xf59e0b);
     expect(nodeColor({ domain: "virtual", is_virtual: false })).not.toBe(0xf59e0b);
+  });
+
+  it("fades ordinary labels while preserving hub and selected labels", () => {
+    const hub = labeledMesh(true, 2);
+    const selected = labeledMesh(false, 2);
+    const ordinary = labeledMesh(false, 2);
+    const meshes = new Map([["hub", hub], ["selected", selected], ["ordinary", ordinary]]);
+
+    setOrdinaryLabelOpacity(meshes, 0.25, "selected", null);
+
+    expect((hub.userData.label as THREE.Sprite).material.opacity).toBe(1);
+    expect((selected.userData.label as THREE.Sprite).material.opacity).toBe(1);
+    expect((ordinary.userData.label as THREE.Sprite).material.opacity).toBe(0.25);
   });
 });
 

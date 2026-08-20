@@ -103,6 +103,22 @@ export function updateNodeLabelVisibility(
   });
 }
 
+export function setOrdinaryLabelOpacity(
+  meshes: ReadonlyMap<string, NodeMesh>,
+  opacity: number,
+  selectedNodeId: string | null,
+  hoveredNodeId: string | null,
+): void {
+  const clamped = Math.min(Math.max(opacity, 0), 1);
+  meshes.forEach((mesh, nodeId) => {
+    const label = mesh.userData.label as THREE.Sprite | undefined;
+    if (!label) return;
+    label.material.opacity = mesh.userData.isHub || nodeId === selectedNodeId || nodeId === hoveredNodeId
+      ? 1
+      : clamped;
+  });
+}
+
 export function disposeNodeMesh(mesh: NodeMesh): void {
   mesh.traverse((object) => {
     if (object instanceof THREE.Sprite) {

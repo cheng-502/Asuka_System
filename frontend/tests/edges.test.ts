@@ -6,6 +6,7 @@ import type { KnowledgeSpaceNode } from "../src/data/types";
 import {
   applyEdgeVisibility,
   createDynamicEdges,
+  setEdgeOpacityFactor,
   updateDynamicEdges,
   type EdgeKind,
   type SceneEdge,
@@ -65,6 +66,19 @@ describe("dynamic knowledge edges", () => {
     expect(updated).toBe(10);
     expect(new Set(edges.map((edge) => edge.line.geometry)).size).toBe(1);
     expect(new Set(edges.map((edge) => edge.line.material)).size).toBe(1);
+  });
+
+  it("applies reversible transition opacity without losing the visibility baseline", () => {
+    const artifact = normalizeArtifact(structuredClone(fixture));
+    const meshes = new Map(artifact.nodes.map((item) => [item.id, new THREE.Object3D()]));
+    const edges = createDynamicEdges(artifact, meshes, new THREE.Group());
+    const visibility = new Map(edges.map((edge) => [edge.id, { visible: true, opacity: 0.4 }]));
+    applyEdgeVisibility(edges, visibility);
+
+    setEdgeOpacityFactor(edges, 0.25);
+    expect(edges[0].line.material.opacity).toBeCloseTo(0.1);
+    setEdgeOpacityFactor(edges, 1);
+    expect(edges[0].line.material.opacity).toBeCloseTo(0.4);
   });
 
   it("skips missing child endpoints and collapses endpoints removed at runtime", () => {

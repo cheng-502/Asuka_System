@@ -3,8 +3,10 @@ import { edgeVisualStyle } from "../src/scene/edges";
 import { nextPinchSelection, normalizedPointerToNdc } from "../src/scene/raycast";
 import {
   applyNodePositionBuffer,
+  canRequestCompact,
   handZoomScale,
   KnowledgeScene,
+  shouldApplySelectionDuringLayout,
   shouldUpdateOrbitControls,
 } from "../src/scene/KnowledgeScene";
 import * as THREE from "three";
@@ -81,6 +83,17 @@ describe("scene interaction helpers", () => {
     expect(shouldUpdateOrbitControls(new Set(["hand"]))).toBe(true);
     expect(shouldUpdateOrbitControls(new Set(["layout"]))).toBe(false);
     expect(shouldUpdateOrbitControls(new Set(["hand", "layout"]))).toBe(false);
+  });
+
+  it("allows compact only after Galaxy is reached, while preserving compact reversal", () => {
+    expect(canRequestCompact("semantic")).toBe(false);
+    expect(canRequestCompact("galaxy")).toBe(true);
+    expect(canRequestCompact("compact")).toBe(true);
+  });
+
+  it("keeps selection stable while layout opacity and edge baselines transition", () => {
+    expect(shouldApplySelectionDuringLayout(true)).toBe(false);
+    expect(shouldApplySelectionDuringLayout(false)).toBe(true);
   });
 
   it("ignores hand transform deltas while a layout transition owns the camera", () => {
