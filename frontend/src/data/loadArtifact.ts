@@ -67,6 +67,7 @@ export function normalizeArtifact(wire: KnowledgeSpaceArtifactWire): KnowledgeSp
       galaxy: { ...wire.layout_generation.galaxy },
       compact: { ...wire.layout_generation.compact },
     },
+    relationships: { ...wire.relationships },
     links: copyLinks(wire.links),
     nodes: [...realNodes, ...virtualNodes],
     capabilities: {

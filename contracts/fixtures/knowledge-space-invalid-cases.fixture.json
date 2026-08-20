@@ -101,6 +101,13 @@
       "mutations": [
         { "operation": "set", "path": ["nodes", 0, "layouts", "galaxy", "x"], "value": 1e400 }
       ]
+    },
+    {
+      "name": "semantic-link-must-meet-recorded-threshold",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["links", 1, "similarity"], "value": 0.1 }
+      ]
     }
   ]
 }

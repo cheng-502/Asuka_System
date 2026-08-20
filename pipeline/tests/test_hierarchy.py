@@ -5,11 +5,14 @@ import sys
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 
 PIPELINE_SRC = Path(__file__).parents[1] / "src"
 sys.path.insert(0, str(PIPELINE_SRC))
 
 from auaka_pipeline.hierarchy import HierarchyConfig, resolve_hierarchy  # noqa: E402
+from auaka_pipeline.embeddings import EmbeddingBatch  # noqa: E402
 from auaka_pipeline.markdown import ParsedNote, WikilinkReference  # noqa: E402
 from auaka_pipeline.relationships import (  # noqa: E402
     RelationRecord,
@@ -149,6 +152,25 @@ class HierarchyResolutionTest(unittest.TestCase):
             resolve_hierarchy(colliding, relationships())
         with self.assertRaisesRegex(ValueError, "case-insensitive"):
             resolve_hierarchy(list(reversed(colliding)), relationships())
+
+    def test_semantic_assignment_uses_all_embedding_hubs_not_visual_top_k(self) -> None:
+        notes = [note("topic/hub.md", hub=True), note("loose/note.md")]
+        embeddings = EmbeddingBatch(
+            note_ids=("topic/hub.md", "loose/note.md"),
+            content_hashes=("hub", "note"),
+            vectors=np.asarray([[1.0, 0.0], [0.8, 0.6]], dtype=np.float32),
+            metadata={"model": "fake", "dimension": 2, "normalized": True},
+        )
+
+        result = resolve_hierarchy(
+            notes,
+            relationships(),
+            HierarchyConfig(min_semantic_similarity=0.75),
+            embeddings=embeddings,
+        )
+
+        self.assertEqual(result.by_id()["loose/note.md"].parent_id, "topic/hub.md")
+        self.assertEqual(result.by_id()["loose/note.md"].assignment, "semantic")
 
 
 if __name__ == "__main__":

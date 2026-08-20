@@ -88,6 +88,7 @@ class KnowledgeSpaceArtifactV2(TypedDict):
     embedding: dict[str, Any]
     umap: dict[str, Any]
     layout_generation: dict[str, Any]
+    relationships: dict[str, Any]
     source: dict[str, Any]
     nodes: list[KnowledgeNodeV2]
     virtual_nodes: list[VirtualNodeV2]
@@ -141,7 +142,7 @@ def _validate_v1_records(artifact: KnowledgeSpaceArtifactV1) -> None:
         raise ArtifactValidationError("source.note_count: does not match nodes")
     for index, node in enumerate(artifact["nodes"]):
         _validate_position(node["position"], f"nodes[{index}].position")
-    _validate_links(artifact["links"], set(node_ids))
+    _validate_links(artifact["links"], set(node_ids), min_similarity=None)
 
 
 def _validate_v2_records(artifact: KnowledgeSpaceArtifactV2) -> None:
@@ -238,7 +239,16 @@ def _validate_v2_records(artifact: KnowledgeSpaceArtifactV2) -> None:
                 f"nodes[{node['id']}].hierarchy.topic_root_id: inconsistent root"
             )
 
-    _validate_links(artifact["links"], set(real_ids))
+    relationship_metadata = artifact["relationships"]
+    for field in ("min_similarity", "hierarchy_min_similarity"):
+        value = relationship_metadata[field]
+        if value is not None and not math.isfinite(float(value)):
+            raise ArtifactValidationError(f"relationships.{field}: must be finite")
+    _validate_links(
+        artifact["links"],
+        set(real_ids),
+        min_similarity=relationship_metadata["min_similarity"],
+    )
 
 
 def _resolve_topic_root(node_id: str, records: dict[str, Any]) -> str:
@@ -259,9 +269,24 @@ def _resolve_topic_root(node_id: str, records: dict[str, Any]) -> str:
         current_id = parent_id
 
 
-def _validate_links(links: list[KnowledgeLink], known_real_nodes: set[str]) -> None:
+def _validate_links(
+    links: list[KnowledgeLink],
+    known_real_nodes: set[str],
+    *,
+    min_similarity: float | None,
+) -> None:
     errors: list[str] = []
     for index, link in enumerate(links):
+        similarity = link.get("similarity")
+        if similarity is not None and not math.isfinite(float(similarity)):
+            errors.append(f"links[{index}].similarity: must be finite")
+        if (
+            min_similarity is not None
+            and "semantic" in link["types"]
+            and similarity is not None
+            and similarity < min_similarity
+        ):
+            errors.append(f"links[{index}].similarity: below recorded threshold")
         if link["source"].startswith("virtual:"):
             errors.append(f"links[{index}].source: virtual namespace is reserved")
         if link["target"].startswith("virtual:"):

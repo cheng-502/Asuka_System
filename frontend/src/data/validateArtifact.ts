@@ -47,7 +47,7 @@ function validateV1Records(artifact: KnowledgeSpaceArtifactV1Wire): void {
   artifact.nodes.forEach((node, index) => {
     validatePosition(node.position, `nodes[${index}].position`);
   });
-  validateLinks(artifact.links, new Set(nodeIds));
+  validateLinks(artifact.links, new Set(nodeIds), null);
 }
 
 function validateV2Records(artifact: KnowledgeSpaceArtifactV2Wire): void {
@@ -135,7 +135,14 @@ function validateV2Records(artifact: KnowledgeSpaceArtifactV2Wire): void {
       throw new ArtifactValidationError(`nodes[${node.id}].hierarchy.topic_root_id: inconsistent root`);
     }
   });
-  validateLinks(artifact.links, new Set(realIds));
+  if (
+    (artifact.relationships.min_similarity !== null
+      && !Number.isFinite(artifact.relationships.min_similarity))
+    || !Number.isFinite(artifact.relationships.hierarchy_min_similarity)
+  ) {
+    throw new ArtifactValidationError("relationships: thresholds must be finite");
+  }
+  validateLinks(artifact.links, new Set(realIds), artifact.relationships.min_similarity);
 }
 
 function resolveTopicRoot(
@@ -159,9 +166,24 @@ function resolveTopicRoot(
   }
 }
 
-function validateLinks(links: readonly KnowledgeSpaceLink[], knownRealNodes: ReadonlySet<string>): void {
+function validateLinks(
+  links: readonly KnowledgeSpaceLink[],
+  knownRealNodes: ReadonlySet<string>,
+  minSimilarity: number | null,
+): void {
   const errors: string[] = [];
   links.forEach((link, index) => {
+    if (link.similarity !== undefined && !Number.isFinite(link.similarity)) {
+      errors.push(`links[${index}].similarity: must be finite`);
+    }
+    if (
+      minSimilarity !== null
+      && link.types.includes("semantic")
+      && link.similarity !== undefined
+      && link.similarity < minSimilarity
+    ) {
+      errors.push(`links[${index}].similarity: below recorded threshold`);
+    }
     if (link.source.startsWith("virtual:")) errors.push(`links[${index}].source: virtual namespace is reserved`);
     if (link.target.startsWith("virtual:")) errors.push(`links[${index}].target: virtual namespace is reserved`);
     if (link.unresolved_target?.startsWith("virtual:")) {

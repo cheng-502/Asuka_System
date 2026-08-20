@@ -109,9 +109,16 @@ export interface LayoutGenerationV2 {
   compact: { algorithm: string; seed: number };
 }
 
+export interface RelationshipGenerationV2 {
+  max_neighbors: number;
+  min_similarity: number | null;
+  hierarchy_min_similarity: number;
+}
+
 export interface KnowledgeSpaceArtifactV2Wire extends CommonArtifactWire {
   version: 2;
   layout_generation: LayoutGenerationV2;
+  relationships: RelationshipGenerationV2;
   nodes: KnowledgeSpaceNodeV2Wire[];
   virtual_nodes: VirtualKnowledgeNodeV2Wire[];
 }
@@ -121,6 +128,7 @@ export type KnowledgeSpaceArtifactWire = KnowledgeSpaceArtifactV1Wire | Knowledg
 export interface KnowledgeSpaceArtifact extends CommonArtifactWire {
   version: 1 | 2;
   layout_generation?: LayoutGenerationV2;
+  relationships?: RelationshipGenerationV2;
   nodes: KnowledgeSpaceNode[];
   capabilities: {
     hierarchy: boolean;

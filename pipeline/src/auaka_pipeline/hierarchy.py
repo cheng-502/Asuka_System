@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Literal, Sequence
 
+import numpy as np
+
+from .embeddings import EmbeddingBatch
 from .markdown import ParsedNote
 from .relationships import RelationshipResult
 
@@ -54,6 +57,8 @@ def resolve_hierarchy(
     notes: Sequence[ParsedNote],
     relationships: RelationshipResult,
     config: HierarchyConfig | None = None,
+    *,
+    embeddings: EmbeddingBatch | None = None,
 ) -> HierarchyResult:
     """Resolve explicit and fallback parentage without mutating source notes."""
 
@@ -107,7 +112,11 @@ def resolve_hierarchy(
         for hub_id in sorted(hubs)
     ]
 
-    similarities = _semantic_similarity_lookup(relationships)
+    similarities = (
+        _embedding_similarity_lookup(embeddings, set(note_by_id), hubs)
+        if embeddings is not None
+        else _semantic_similarity_lookup(relationships)
+    )
     hubs_by_folder = _hubs_by_folder(hubs)
     for note in ordered_notes:
         if note.note_id in hubs:
@@ -277,6 +286,31 @@ def _semantic_similarity_lookup(
             continue
         key = frozenset((relation.source, relation.target))
         result[key] = max(result.get(key, -1.0), relation.similarity)
+    return result
+
+
+def _embedding_similarity_lookup(
+    embeddings: EmbeddingBatch,
+    note_ids: set[str],
+    hubs: set[str],
+) -> dict[frozenset[str], float]:
+    if set(embeddings.note_ids) != note_ids or len(embeddings.note_ids) != len(note_ids):
+        raise ValueError("notes and hierarchy embeddings must use the same note IDs")
+    vectors = np.asarray(embeddings.vectors, dtype=np.float64)
+    if vectors.ndim != 2 or vectors.shape[0] != len(embeddings.note_ids):
+        raise ValueError("hierarchy embeddings must be a two-dimensional aligned matrix")
+    if not np.isfinite(vectors).all():
+        raise ValueError("hierarchy embeddings must be finite")
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    if np.any(norms <= np.finfo(np.float64).eps):
+        raise ValueError("hierarchy embeddings must be non-zero")
+    normalized = vectors / norms
+    rows = {note_id: index for index, note_id in enumerate(embeddings.note_ids)}
+    result: dict[frozenset[str], float] = {}
+    for note_id in sorted(note_ids - hubs):
+        for hub_id in sorted(hubs):
+            similarity = float(np.clip(np.dot(normalized[rows[note_id]], normalized[rows[hub_id]]), -1.0, 1.0))
+            result[frozenset((note_id, hub_id))] = similarity
     return result
 
 

@@ -12,6 +12,8 @@ from typing import Any
 import numpy as np
 
 from .embeddings import EmbeddingBatch
+from .galaxy_layout import GalaxyLayoutResult
+from .hierarchy import HierarchyResult, UNASSIGNED_HUB_ID
 from .markdown import ParsedNote
 from .models import KnowledgeSpaceArtifact, validate_artifact
 from .relationships import RelationshipResult
@@ -26,9 +28,12 @@ def build_artifact(
     relationships: RelationshipResult,
     positions: np.ndarray,
     *,
+    hierarchy: HierarchyResult,
+    layouts: GalaxyLayoutResult,
     vault_hash: str,
     pipeline_version: str,
     umap_metadata: dict[str, Any],
+    hierarchy_min_similarity: float = 0.60,
 ) -> KnowledgeSpaceArtifact:
     """Assemble a schema-ready artifact without embedding high-dimensional data."""
     coordinates = np.asarray(positions, dtype=np.float32)
@@ -42,12 +47,29 @@ def build_artifact(
         for key in ("model", "dimension", "metric", "normalized", "revision", "device", "runtime_device")
         if key in embeddings.metadata and embeddings.metadata[key] is not None
     }
+    hierarchy_by_id = hierarchy.by_id()
+    if set(hierarchy_by_id) != set(embeddings.note_ids):
+        raise ValueError("hierarchy and embeddings must use the same note IDs")
+    if set(layouts.galaxy) != set(layouts.compact):
+        raise ValueError("galaxy and compact layouts must use the same node IDs")
+    expected_layout_ids = set(embeddings.note_ids)
+    if any(record.parent_id == UNASSIGNED_HUB_ID for record in hierarchy.records):
+        expected_layout_ids.add(UNASSIGNED_HUB_ID)
+    if set(layouts.galaxy) != expected_layout_ids:
+        raise ValueError("layouts must contain exactly the hierarchy node IDs")
+
     artifact: dict[str, Any] = {
-        "version": 1,
+        "version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "pipeline": {"version": pipeline_version},
         "embedding": embedding_metadata,
         "umap": umap_metadata,
+        "layout_generation": layouts.metadata,
+        "relationships": {
+            "max_neighbors": relationships.distribution["max_neighbors"],
+            "min_similarity": relationships.distribution["threshold"],
+            "hierarchy_min_similarity": hierarchy_min_similarity,
+        },
         "source": {"vault_hash": vault_hash, "note_count": len(notes)},
         "nodes": [
             {
@@ -55,14 +77,53 @@ def build_artifact(
                 "title": note.title,
                 "summary": note.summary,
                 "domain": note.domain,
-                "position": {"x": float(coordinates[row, 0]), "y": float(coordinates[row, 1]), "z": float(coordinates[row, 2])},
+                "layouts": {
+                    "semantic": _position(coordinates[row]),
+                    "galaxy": _position(layouts.galaxy[note.note_id]),
+                    "compact": _position(layouts.compact[note.note_id]),
+                },
+                "hierarchy": {
+                    "role": hierarchy_by_id[note.note_id].role,
+                    "parent_id": hierarchy_by_id[note.note_id].parent_id,
+                    "depth": hierarchy_by_id[note.note_id].depth,
+                    "assignment": hierarchy_by_id[note.note_id].assignment,
+                    "topic_root_id": hierarchy_by_id[note.note_id].topic_root_id,
+                },
                 "explicit_link_count": len(note.wikilinks),
             }
             for row, note in enumerate(notes)
         ],
+        "virtual_nodes": _virtual_nodes(layouts),
         "links": relationships.artifact_links(),
     }
     return validate_artifact(artifact)
+
+
+def _virtual_nodes(layouts: GalaxyLayoutResult) -> list[dict[str, Any]]:
+    if UNASSIGNED_HUB_ID not in layouts.galaxy:
+        return []
+    return [
+        {
+            "id": UNASSIGNED_HUB_ID,
+            "title": "未归类",
+            "layouts": {
+                "semantic": _position(layouts.galaxy[UNASSIGNED_HUB_ID]),
+                "galaxy": _position(layouts.galaxy[UNASSIGNED_HUB_ID]),
+                "compact": _position(layouts.compact[UNASSIGNED_HUB_ID]),
+            },
+            "hierarchy": {
+                "role": "hub",
+                "parent_id": None,
+                "depth": 0,
+                "assignment": "unassigned",
+                "topic_root_id": UNASSIGNED_HUB_ID,
+            },
+        }
+    ]
+
+
+def _position(values: Any) -> dict[str, float]:
+    return {"x": float(values[0]), "y": float(values[1]), "z": float(values[2])}
 
 
 def write_artifact_atomic(
@@ -86,7 +147,7 @@ def write_artifact_atomic(
             delete=False,
         ) as handle:
             temporary_path = Path(handle.name)
-            json.dump(artifact, handle, ensure_ascii=False, indent=2)
+            json.dump(artifact, handle, ensure_ascii=False, indent=2, allow_nan=False)
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())

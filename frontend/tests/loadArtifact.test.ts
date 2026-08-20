@@ -61,11 +61,13 @@ describe("loadArtifact", () => {
     wire.links[0].types.push("semantic");
     wire.source.note_count = 999;
     wire.layout_generation.galaxy.seed = 999;
+    wire.relationships.min_similarity = null;
 
     expect(artifact.nodes[0].position.x).not.toBe(999);
     expect(artifact.links[0].types).toEqual(["wikilink"]);
     expect(artifact.source.note_count).toBe(v2Fixture.source.note_count);
     expect(artifact.layout_generation?.galaxy.seed).toBe(v2Fixture.layout_generation.galaxy.seed);
+    expect(artifact.relationships?.min_similarity).toBe(v2Fixture.relationships.min_similarity);
   });
 
   it("isolates v1 runtime metadata from the wire payload", () => {

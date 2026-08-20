@@ -113,6 +113,25 @@ class CliTest(unittest.TestCase):
         self.assertEqual(report["encoded_count"], 1)
         self.assertTrue(cache_exists)
 
+    def test_generate_defaults_to_thresholded_links_and_requires_explicit_calibration(self) -> None:
+        generated = {
+            "note_count": 0,
+            "hierarchy": {"assignment_counts": {}, "warnings": []},
+        }
+        output = io.StringIO()
+        with patch("auaka_pipeline.cli.generate_from_vault", return_value=generated) as generate:
+            with redirect_stdout(output):
+                self.assertEqual(main(["generate", "--vault", "C:/vault"]), 0)
+            self.assertEqual(generate.call_args.kwargs["min_similarity"], 0.60)
+            self.assertEqual(generate.call_args.kwargs["hierarchy_min_similarity"], 0.60)
+
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    main(["generate", "--vault", "C:/vault", "--calibrate-similarity"]),
+                    0,
+                )
+            self.assertIsNone(generate.call_args.kwargs["min_similarity"])
+
 
 if __name__ == "__main__":
     unittest.main()

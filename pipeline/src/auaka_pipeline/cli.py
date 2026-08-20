@@ -36,7 +36,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     generate_parser.add_argument("--embedding-cache", type=Path, default=Path("data/embeddings"))
     generate_parser.add_argument("--max-neighbors", type=int, default=5)
-    generate_parser.add_argument("--min-similarity", type=float, default=None)
+    generate_parser.add_argument("--min-similarity", type=float, default=0.60)
+    generate_parser.add_argument(
+        "--calibrate-similarity",
+        action="store_true",
+        help="emit unthresholded Top-K links for explicit calibration",
+    )
+    generate_parser.add_argument("--hierarchy-min-similarity", type=float, default=0.60)
     chunks_parser = subparsers.add_parser(
         "chunks", help="build or incrementally update the local chunk retrieval index"
     )
@@ -68,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
                 artifact_path=args.artifact,
                 embedding_cache_path=args.embedding_cache,
                 max_neighbors=args.max_neighbors,
-                min_similarity=args.min_similarity,
+                min_similarity=None if args.calibrate_similarity else args.min_similarity,
+                hierarchy_min_similarity=args.hierarchy_min_similarity,
             )
         except Exception as error:
             print(f"generation failed: {error}")

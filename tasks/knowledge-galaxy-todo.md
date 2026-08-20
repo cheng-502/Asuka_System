@@ -6,8 +6,8 @@
 - [x] Checkpoint A: Contract and authoring review
 - [x] Task 3: Deterministic multi-level hierarchy resolution
 - [x] Task 4: Galaxy and compact coordinate generation
-- [ ] Task 5: Artifact v2 generation integration
-- [ ] Checkpoint B: Offline Artifact review
+- [x] Task 5: Artifact v2 generation integration
+- [x] Checkpoint B: Offline Artifact review
 - [ ] Task 6: Frontend layout state and interruption-safe transitions
 - [ ] Task 7: Dynamic edges and relationship visibility
 - [ ] Checkpoint C: Animated scene review

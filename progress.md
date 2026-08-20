@@ -326,3 +326,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - The layout boundary validates parent roles, depths, topic roots, virtual-unassigned symmetry, cycles, reachability, complete output ID sets, and finite coordinates without mutating UMAP input arrays.
 - Layout-changing constants are owned by immutable algorithm version `galaxy-layout-v1`; only the deterministic seed remains configurable and is persisted in metadata.
 - Verification: 69 non-projection Pipeline tests and `git diff --check` passed. Independent reviews approved after adversarial hierarchy, numeric, metadata, and aliasing cases were fixed.
+
+## 2026-08-21 — Knowledge Galaxy Task 5 and Checkpoint B complete
+
+- The generation pipeline now atomically publishes strict Artifact v2 with persisted semantic, Galaxy, and Compact coordinates plus real/virtual hierarchy records.
+- Semantic hierarchy assignment computes cosine similarity against every real Hub directly from the original high-dimensional embeddings; visual Top-K pruning cannot hide a valid hierarchy candidate.
+- Production knowledge relationships now default to `Top-5 AND similarity >= 0.60`; unthresholded output requires the explicit CLI calibration flag.
+- Artifact metadata records visual max-neighbors, visual threshold, hierarchy threshold, layout version/seed, embedding context, UMAP context, and Vault hash. Cross-validation rejects metadata/edge mismatches and all non-finite numeric values.
+- CLI diagnostics include deterministic assignment counts and safe hierarchy warnings; integration tests confirm Vault files and modification times remain unchanged.
+- Verification: 73 non-projection Pipeline tests, 127 frontend tests, TypeScript, isolated production build, and `git diff --check` passed. Repeated fixture assembly is identical after removing `generated_at`; independent reviews approved.
