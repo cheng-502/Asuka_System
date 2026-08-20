@@ -309,3 +309,11 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Body Wikilinks remain backward compatible, including same-note heading and block references; only a hierarchy parent requires a concrete target note.
 - The Vault indexing report exposes parsed role and parent targets for read-only hierarchy preflight diagnostics.
 - Verification: 55 non-projection Pipeline tests and `git diff --check` passed. Independent specification and quality reviews approved the contract and authoring behavior.
+
+## 2026-08-21 — Knowledge Galaxy Task 3 complete
+
+- Added a pure deterministic hierarchy resolver for explicit Hub nesting and ordinary-note fallback assignment.
+- Ordinary notes follow the frozen precedence: valid explicit parent, strongest same-subtree Wikilink Hub, nearest ancestor-folder Hub, thresholded semantic Hub, then `virtual:unassigned`.
+- Automatic inference never creates Hub-to-Hub nesting; invalid parents and explicit cycles produce stable warnings and affected Hubs remain safe top-level roots.
+- Resolution is independent of input order, handles chains deeper than Python's recursion limit iteratively, and rejects case-insensitive Note ID collisions before building reference indexes.
+- Verification: 61 non-projection Pipeline tests and `git diff --check` passed. Independent specification and quality reviews approved after the canonical-ID collision guard was added.

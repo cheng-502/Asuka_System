@@ -4,7 +4,7 @@
 - [x] Task 1b: Frontend wire/runtime normalization and v1 compatibility
 - [x] Task 2: Explicit hierarchy Frontmatter parsing
 - [x] Checkpoint A: Contract and authoring review
-- [ ] Task 3: Deterministic multi-level hierarchy resolution
+- [x] Task 3: Deterministic multi-level hierarchy resolution
 - [ ] Task 4: Galaxy and compact coordinate generation
 - [ ] Task 5: Artifact v2 generation integration
 - [ ] Checkpoint B: Offline Artifact review
