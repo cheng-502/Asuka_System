@@ -335,3 +335,11 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Artifact metadata records visual max-neighbors, visual threshold, hierarchy threshold, layout version/seed, embedding context, UMAP context, and Vault hash. Cross-validation rejects metadata/edge mismatches and all non-finite numeric values.
 - CLI diagnostics include deterministic assignment counts and safe hierarchy warnings; integration tests confirm Vault files and modification times remain unchanged.
 - Verification: 73 non-projection Pipeline tests, 127 frontend tests, TypeScript, isolated production build, and `git diff --check` passed. Repeated fixture assembly is identical after removing `generated_at`; independent reviews approved.
+
+## 2026-08-21 — Knowledge Galaxy Task 6 complete
+
+- Added reusable timestamp-based vector transitions and semantic/Galaxy layout state backed only by persisted Artifact coordinates.
+- The 800 ms cubic transition can reverse or retarget from its current rendered values without jumps; timestamp rollback cannot move it backward, and reduced motion applies exact targets immediately.
+- Node mesh identity, selection, and hover state survive layout changes while the camera transitions to deterministic coordinate bounds.
+- Hand and layout camera control now share composable ownership: hand-only transforms remain live, layout transitions exclusively own the camera, pending inertia is flushed, and controls restore only after the final owner releases.
+- Verification: 135 frontend tests, TypeScript, and `git diff --check` passed. Independent specification and quality reviews approved after camera ownership and rollback hardening.

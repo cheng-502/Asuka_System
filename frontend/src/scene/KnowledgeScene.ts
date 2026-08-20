@@ -1,10 +1,15 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { KnowledgeSpaceArtifact } from "../data/types";
+import type { KnowledgeLayoutName, KnowledgeSpaceArtifact } from "../data/types";
 import { createRelationshipEdges } from "./edges";
 import { createNodeMeshes, setNodeState, type NodeMesh } from "./nodes";
 import { nextPinchSelection, normalizedPointerToNdc, pickNode } from "./raycast";
 import { calculateCameraFrame } from "./cameraFrame";
+import {
+  KnowledgeLayoutState,
+  LAYOUT_TRANSITION_MS,
+  RetargetableVectorTransition,
+} from "./LayoutTransition";
 
 export class KnowledgeScene {
   readonly scene = new THREE.Scene();
@@ -12,6 +17,7 @@ export class KnowledgeScene {
   readonly renderer: THREE.WebGLRenderer;
   readonly controls: OrbitControls;
   readonly nodeMeshes: Map<string, NodeMesh>;
+  readonly layoutState: KnowledgeLayoutState;
   private readonly nodeGroup = new THREE.Group();
   private readonly edgeGroup = new THREE.Group();
   private readonly container: HTMLElement;
@@ -19,18 +25,26 @@ export class KnowledgeScene {
   private readonly raycaster = new THREE.Raycaster();
   private hoveredNodeId: string | null = null;
   private selectedNodeId: string | null = null;
-  private handTransformDampingEnabled: boolean | null = null;
   private readonly onHover?: (nodeId: string | null) => void;
   private readonly onSelect?: (nodeId: string | null) => void;
+  private readonly onLayoutChange?: (layout: KnowledgeLayoutName) => void;
+  private readonly cameraTransition: RetargetableVectorTransition;
+  private readonly controlOwners = new Set<"hand" | "layout">();
+  private controlBaseState: { enabled: boolean; damping: boolean } | null = null;
 
   constructor(
     container: HTMLElement,
     artifact: KnowledgeSpaceArtifact,
-    callbacks: { onHover?: (nodeId: string | null) => void; onSelect?: (nodeId: string | null) => void } = {},
+    callbacks: {
+      onHover?: (nodeId: string | null) => void;
+      onSelect?: (nodeId: string | null) => void;
+      onLayoutChange?: (layout: KnowledgeLayoutName) => void;
+    } = {},
   ) {
     this.container = container;
     this.onHover = callbacks.onHover;
     this.onSelect = callbacks.onSelect;
+    this.onLayoutChange = callbacks.onLayoutChange;
     this.scene.background = new THREE.Color(0x07111f);
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     this.camera.position.set(0, 0, 8);
@@ -46,6 +60,7 @@ export class KnowledgeScene {
     this.controls.panSpeed = 0.8;
     this.scene.add(this.nodeGroup, this.edgeGroup);
     this.nodeMeshes = createNodeMeshes(artifact, this.nodeGroup);
+    this.layoutState = new KnowledgeLayoutState(artifact.nodes, artifact.capabilities.layouts);
     createRelationshipEdges(artifact, this.nodeMeshes, this.edgeGroup);
     const frame = calculateCameraFrame(
       Array.from(this.nodeMeshes.values(), (mesh) => mesh.position),
@@ -60,6 +75,7 @@ export class KnowledgeScene {
     this.controls.minDistance = frame.minDistance;
     this.controls.maxDistance = frame.maxDistance;
     this.controls.update();
+    this.cameraTransition = new RetargetableVectorTransition(this.cameraValues());
     this.scene.add(new THREE.AmbientLight(0x9cc8ff, 1.8));
     const keyLight = new THREE.PointLight(0x8bdcff, 30, 30);
     keyLight.position.set(3, 4, 6);
@@ -69,7 +85,7 @@ export class KnowledgeScene {
     this.renderer.domElement.addEventListener("pointermove", this.handlePointerMove);
     this.renderer.domElement.addEventListener("pointerleave", this.handlePointerLeave);
     this.renderer.domElement.addEventListener("pointerdown", this.handlePointerDown);
-    this.animate();
+    this.animate(performance.now());
   }
 
   dispose(): void {
@@ -103,31 +119,18 @@ export class KnowledgeScene {
   }
 
   beginHandTransform(): void {
-    this.handTransformDampingEnabled ??= this.controls.enableDamping;
-    const position = this.camera.position.clone();
-    const target = this.controls.target.clone();
-    const zoom = this.camera.zoom;
-    this.controls.enableDamping = false;
-    this.controls.update();
-    this.camera.position.copy(position);
-    this.controls.target.copy(target);
-    this.camera.zoom = zoom;
-    this.camera.updateProjectionMatrix();
-    this.controls.enabled = false;
+    this.acquireControlOwnership("hand");
   }
 
   applyHandTransform(zoomLogDelta: number, rotationDeltaRad: number): void {
+    if (this.controlOwners.has("layout")) return;
     if (zoomLogDelta > 0) this.controls.dollyIn(handZoomScale(zoomLogDelta));
     if (zoomLogDelta < 0) this.controls.dollyOut(handZoomScale(zoomLogDelta));
     if (rotationDeltaRad !== 0) this.controls.rotateLeft(rotationDeltaRad);
   }
 
   endHandTransform(): void {
-    this.controls.enabled = true;
-    if (this.handTransformDampingEnabled !== null) {
-      this.controls.enableDamping = this.handTransformDampingEnabled;
-      this.handTransformDampingEnabled = null;
-    }
+    this.releaseControlOwnership("hand");
   }
 
   setPointer(normalizedX: number, normalizedY: number): void {
@@ -150,6 +153,54 @@ export class KnowledgeScene {
   selectNode(nodeId: string | null): void {
     this.applySelectedState(nodeId);
     this.onSelect?.(nodeId);
+  }
+
+  setLayout(
+    layout: KnowledgeLayoutName,
+    timestampMs = performance.now(),
+    reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  ): void {
+    const targetPositions = this.layoutState.target(layout);
+    if (!Number.isFinite(timestampMs)) throw new RangeError("layout timestamp must be finite");
+    const targetFrame = calculateCameraFrame(positionsFromBuffer(targetPositions), this.camera.fov);
+    this.acquireControlOwnership("layout");
+    try {
+      this.layoutState.retarget(layout, timestampMs, reducedMotion);
+      const viewDirection = this.camera.position.clone().sub(this.controls.target);
+      if (viewDirection.lengthSq() === 0) viewDirection.set(0.72, 0.42, 1);
+      viewDirection.normalize();
+      const targetCameraPosition = targetFrame.center.clone().addScaledVector(
+        viewDirection,
+        targetFrame.distance,
+      );
+      this.cameraTransition.reset(this.cameraValues());
+      this.cameraTransition.retarget(
+        new Float64Array([
+          targetCameraPosition.x,
+          targetCameraPosition.y,
+          targetCameraPosition.z,
+          targetFrame.center.x,
+          targetFrame.center.y,
+          targetFrame.center.z,
+          targetFrame.minDistance,
+          targetFrame.maxDistance,
+          targetFrame.near,
+          targetFrame.far,
+        ]),
+        timestampMs,
+        LAYOUT_TRANSITION_MS,
+        reducedMotion,
+      );
+      if (reducedMotion) {
+        applyNodePositionBuffer(this.layoutState.nodeIds, this.layoutState.current, this.nodeMeshes);
+        this.applyCameraValues(this.cameraTransition.current);
+        this.releaseControlOwnership("layout");
+        this.onLayoutChange?.(this.layoutState.layout);
+      }
+    } catch (error) {
+      this.releaseControlOwnership("layout");
+      throw error;
+    }
   }
 
   private readonly applySelectedState = (nodeId: string | null): void => {
@@ -191,13 +242,129 @@ export class KnowledgeScene {
     this.renderer.setSize(width, height, false);
   };
 
-  private readonly animate = (): void => {
+  private readonly animate = (timestampMs: number): void => {
     this.animationFrame = requestAnimationFrame(this.animate);
-    this.controls.update();
+    this.applyTransitions(timestampMs);
+    if (shouldUpdateOrbitControls(this.controlOwners)) this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
+
+  private applyTransitions(timestampMs: number): void {
+    const wasTransitioning = this.layoutState.isTransitioning;
+    const positions = this.layoutState.sample(timestampMs);
+    if (wasTransitioning || this.layoutState.isTransitioning) {
+      applyNodePositionBuffer(this.layoutState.nodeIds, positions, this.nodeMeshes);
+    }
+    const cameraWasTransitioning = this.cameraTransition.active;
+    const camera = this.cameraTransition.sample(timestampMs);
+    if (cameraWasTransitioning || this.cameraTransition.active) {
+      this.applyCameraValues(camera);
+    }
+    if (
+      this.controlOwners.has("layout")
+      && !this.layoutState.isTransitioning
+      && !this.cameraTransition.active
+    ) {
+      this.releaseControlOwnership("layout");
+      this.onLayoutChange?.(this.layoutState.layout);
+    }
+  }
+
+  private cameraValues(): Float64Array {
+    return new Float64Array([
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z,
+      this.controls.target.x,
+      this.controls.target.y,
+      this.controls.target.z,
+      this.controls.minDistance,
+      this.controls.maxDistance,
+      this.camera.near,
+      this.camera.far,
+    ]);
+  }
+
+  private applyCameraValues(values: Float64Array): void {
+    this.camera.position.set(values[0], values[1], values[2]);
+    this.controls.target.set(values[3], values[4], values[5]);
+    this.controls.minDistance = values[6];
+    this.controls.maxDistance = values[7];
+    this.camera.near = values[8];
+    this.camera.far = values[9];
+    this.camera.updateProjectionMatrix();
+  }
+
+  private acquireControlOwnership(owner: "hand" | "layout"): void {
+    if (this.controlOwners.has(owner)) return;
+    if (this.controlOwners.size > 0) {
+      if (owner === "layout") this.flushControlInertia();
+      this.controlOwners.add(owner);
+      return;
+    }
+    const baseState = { enabled: this.controls.enabled, damping: this.controls.enableDamping };
+    try {
+      this.flushControlInertia();
+      this.controls.enabled = false;
+      this.controlBaseState = baseState;
+      this.controlOwners.add(owner);
+    } catch (error) {
+      this.controls.enabled = baseState.enabled;
+      this.controls.enableDamping = baseState.damping;
+      this.controlBaseState = null;
+      throw error;
+    }
+  }
+
+  private releaseControlOwnership(owner: "hand" | "layout"): void {
+    if (!this.controlOwners.delete(owner) || this.controlOwners.size > 0) return;
+    if (this.controlBaseState !== null) {
+      this.controls.enabled = this.controlBaseState.enabled;
+      this.controls.enableDamping = this.controlBaseState.damping;
+      this.controlBaseState = null;
+    }
+  }
+
+  private flushControlInertia(): void {
+    const position = this.camera.position.clone();
+    const target = this.controls.target.clone();
+    const zoom = this.camera.zoom;
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.camera.position.copy(position);
+    this.controls.target.copy(target);
+    this.camera.zoom = zoom;
+    this.camera.updateProjectionMatrix();
+  }
 }
 
 export function handZoomScale(zoomLogDelta: number): number {
   return Math.exp(Math.abs(zoomLogDelta));
+}
+
+export function shouldUpdateOrbitControls(
+  owners: ReadonlySet<"hand" | "layout">,
+): boolean {
+  return !owners.has("layout");
+}
+
+export function applyNodePositionBuffer(
+  nodeIds: readonly string[],
+  positions: Float64Array,
+  meshes: ReadonlyMap<string, THREE.Object3D>,
+): void {
+  if (positions.length !== nodeIds.length * 3) throw new RangeError("node position buffer length mismatch");
+  nodeIds.forEach((nodeId, index) => {
+    const mesh = meshes.get(nodeId);
+    if (!mesh) throw new Error(`node mesh is missing: ${nodeId}`);
+    mesh.position.set(positions[index * 3], positions[index * 3 + 1], positions[index * 3 + 2]);
+  });
+}
+
+function positionsFromBuffer(values: Float64Array): THREE.Vector3[] {
+  const positions: THREE.Vector3[] = [];
+  for (let index = 0; index < values.length; index += 3) {
+    positions.push(new THREE.Vector3(values[index], values[index + 1], values[index + 2]));
+  }
+  return positions;
 }
