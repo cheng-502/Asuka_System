@@ -82,7 +82,7 @@ When multiple candidates tie, deterministic Note ID ordering breaks the tie. Thi
 
 ## 5. Artifact Contract
 
-The schema changes are incompatible with the current strict v1 node schema, so the pipeline emits **Artifact version 2**. Existing v1 fixtures remain supported by the frontend and receive a derived single-level fallback hierarchy at load time.
+The schema changes are incompatible with the current strict v1 node schema, so the pipeline emits **Artifact version 2**. The root schema uses two strict branches discriminated by exact version; v2 is not a loose superset of v1. Existing v1 Artifacts keep Semantic Space available, map runtime transition targets to their persisted semantic position, and expose `capabilities.hierarchy = false`; Topic Galaxy stays disabled until the Artifact is regenerated to v2. The browser never calculates a fallback layout.
 
 Each real node gains:
 
@@ -110,10 +110,12 @@ Constraints:
 - `depth` is derived and validated by the pipeline.
 - `assignment` is `explicit`, `wikilink`, `folder`, `semantic`, or `unassigned`.
 - `topic_root_id` points to the top-level hub containing the node.
-- `semantic` remains the persisted UMAP coordinate; no UMAP runs in the browser.
+- `semantic` is the only persisted UMAP coordinate source in v2; v2 does not also store the legacy `position` field.
 - `galaxy` and `compact` are calculated offline and persisted for reproducibility.
-- Virtual fallback hubs live in a separate `virtual_nodes` collection and cannot collide with real Note IDs.
+- Virtual fallback hubs live in a separate `virtual_nodes` collection under the reserved `virtual:` namespace and cannot collide with real Note IDs.
 - Layout parameters and algorithm version are stored in Artifact metadata.
+- Hierarchy edges derive from `hierarchy.parent_id` and are not duplicated in `links`.
+- All persisted coordinates must be finite in both Python and frontend cross-record validation.
 
 ## 6. Deterministic Galaxy Layout
 
@@ -232,7 +234,7 @@ Targets are measured with the real 351-note Artifact and stress fixtures at 1,00
 
 ## 11. Failure Handling
 
-- v1 Artifact: load Semantic Space normally and derive a deterministic one-level Topic Galaxy from Note ID folders.
+- v1 Artifact: load Semantic Space normally and disable Topic Galaxy until offline v2 regeneration.
 - Invalid hierarchy metadata: reject invalid v2 Artifact during schema validation.
 - Unresolved parent or cycle: pipeline warning plus deterministic fallback assignment.
 - Empty Vault: render an empty-state message; toolbar actions remain disabled.
@@ -263,8 +265,8 @@ Targets are measured with the real 351-note Artifact and stress fixtures at 1,00
 
 ### Browser acceptance
 
-- Real 351-note Artifact opens in both views.
-- Topic Galaxy visibly contains multiple top-level hubs, nested sub-hubs, and ordinary-note satellites.
+- Real 351-note v2 Artifact opens in both views and truthfully renders its fallback/unassigned structure when no explicit hub metadata exists.
+- A deterministic acceptance fixture visibly contains multiple top-level hubs, nested sub-hubs, and ordinary-note satellites.
 - Selecting a hub reveals its parent path and local neighborhood.
 - Collapse produces a centered compact globe and smooth Earth-like rotation.
 - Expand restores the same hierarchy without node identity changes.

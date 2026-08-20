@@ -278,3 +278,10 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - The private 351-node artifact was hash-verified and copied to the ignored frontend data path for local preview only; it remains outside Git.
 - User camera acceptance found the interaction functional aside from sensitivity tuning. Trace replay, metrics, and formal calibration are intentionally deferred while development moves to richer node knowledge display.
 - Final verification: 19 frontend test files and 122 tests passed, TypeScript passed, an isolated production build passed, and `git diff --check` passed. Independent specification review approved; independent quality review approved after confidence-semantics correction.
+
+## 2026-08-20 — Hierarchical Knowledge Galaxy plan ready
+
+- User approved the written multi-level topic-galaxy specification and authorized direct execution after task breakdown.
+- Added a ten-task contract-first plan covering Artifact v2 compatibility, Frontmatter hierarchy, deterministic offline layouts, animated dual-view rendering, dynamic relationships, the right toolbar, compact rotation, and real-data release gates.
+- Work remains on `codex/interaction-calibration-v1.1`; main agent owns contracts, integration, Git, and final decisions while independent agents provide checkpoint reviews.
+- Independent plan review identified an unsafe v1 browser-layout assumption and oversized contract/rotation tasks. The plan now splits those tasks, disables Topic Galaxy for legacy v1, adds exact hierarchy/LOD/timing/performance criteria, and records the real Vault's current 0/0 hierarchy preflight.

@@ -191,3 +191,14 @@ The final differentiator is a knowledge space that can eventually be changed by 
 - Additional MVP-2.0 hardening required before MVP-3: strict cache validation and checksums, empty-index handling, Vault snapshot/writer coordination, bounded retrieval concurrency and request sizes, structured error sanitization, enforced loopback privacy, retrieval provenance/health endpoints, Markdown edge-case tests, and pinned dependency/model revisions.
 - OSS shortlist judgment: adopt a small MIT One Euro Filter implementation or vendor an attributed implementation behind `PointerFilter`; wrap `whisper.cpp`, Pydantic AI Slim, and Obsidian Local REST API behind Auaka-owned interfaces; defer LangGraph; reject LlamaIndex and a generic MCP filesystem server for this scope.
 - `sqlite-vec` and FastEmbed are candidates, not automatic replacements. The current exact NumPy cosine path is already appropriate for the frozen 100–1,000-note MVP scale; migration requires benchmark evidence and a separate approved design because replacing BGE-M3 or storage can change retrieval semantics.
+
+## 2026-08-20 — Hierarchical Knowledge Galaxy planning findings
+
+- Python and frontend Artifact validation are strict v1 boundaries; v2 requires dual-version normalization before generation output changes.
+- `ParsedNote` currently uses a safe scalar Frontmatter parser, so hierarchy fields need no YAML execution dependency.
+- Note IDs are normalized relative paths, enabling folder ancestry without exposing absolute Vault paths.
+- Three.js edge geometry is captured once at scene construction; animated layouts must mutate existing edge buffers to prevent detached lines.
+- Scene transition, visibility, and auto-rotation should be pure/testable controllers while `KnowledgeScene` retains Three.js resource ownership.
+- The ignored real Artifact must remain v1 until fixture/schema/pipeline compatibility is proven, then be regenerated privately to v2.
+- Read-only preflight of the configured real Vault found 0 `knowledge_role` files and 0 `knowledge_parent` files. Real-data acceptance must not claim nested explicit hubs until the user authors that metadata; deterministic multi-level fixtures provide structural acceptance meanwhile.
+- Review froze strict v1/v2 schema branches, separate wire/runtime types, one semantic coordinate source, a reserved virtual-ID namespace, derived hierarchy edges, and finite-coordinate cross-validation.
