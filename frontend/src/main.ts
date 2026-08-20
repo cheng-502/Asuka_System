@@ -14,6 +14,7 @@ import { DetailPanel } from "./ui/DetailPanel";
 import { CameraPreview } from "./ui/CameraPreview";
 import { InteractionGuide } from "./ui/InteractionGuide";
 import { PointerPresenter, shouldShowPointerForHandCount } from "./ui/PointerPresenter";
+import { ViewControls } from "./ui/ViewControls";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -24,6 +25,9 @@ if (!app) {
 app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
     <div id="scene-root" class="scene-root" aria-label="3D knowledge space"></div>
+    <nav id="view-controls-root" aria-label="Knowledge-space views"></nav>
+    <aside id="function-toolbar-root" aria-label="Knowledge-space functions"></aside>
+    <p id="empty-state" class="empty-state" hidden>No knowledge notes are available in this Artifact.</p>
     <section class="status-card" id="status-card" aria-live="polite">
       <p class="eyebrow">MVP-1 · GESTURE-CONTROLLED KNOWLEDGE SPACE</p>
       <h1 id="page-title">Auaka System</h1>
@@ -56,16 +60,27 @@ async function boot(): Promise<void> {
     const detailRoot = document.querySelector<HTMLElement>("#detail-root");
     const cameraRoot = document.querySelector<HTMLElement>("#camera-root");
     const guideRoot = document.querySelector<HTMLElement>("#guide-root");
+    const viewControlsRoot = document.querySelector<HTMLElement>("#view-controls-root");
+    const functionToolbarRoot = document.querySelector<HTMLElement>("#function-toolbar-root");
+    const emptyState = document.querySelector<HTMLElement>("#empty-state");
     const detailPanel = detailRoot ? new DetailPanel(detailRoot, artifact) : null;
     if (guideRoot) new InteractionGuide(guideRoot);
     const pointerPresenter = shell ? new PointerPresenter(shell, {
       cursorDiameterPx: calibrationResult.profile.pointer.cursor_diameter_px,
       hitRadiusPx: calibrationResult.profile.pointer.hit_radius_px,
     }) : null;
+    let viewControls: ViewControls | null = null;
     const scene = new KnowledgeScene(sceneRoot, artifact, {
       onHover: (nodeId) => pointerPresenter?.setHovered(nodeId !== null),
       onSelect: (nodeId) => detailPanel?.setSelectedNode(nodeId),
+      onLayoutChange: (layout) => viewControls?.setLayout(layout),
     });
+    if (viewControlsRoot && functionToolbarRoot) {
+      viewControls = new ViewControls(viewControlsRoot, functionToolbarRoot, artifact, (layout) => {
+        scene.setLayout(layout);
+      });
+    }
+    if (emptyState) emptyState.hidden = artifact.source.note_count > 0;
     const gestureEngine = new GestureEngine(
       gestureConfigFromCalibration(calibrationResult.profile),
     );

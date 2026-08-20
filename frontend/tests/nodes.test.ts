@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {
   countNodeLabels,
   MAX_ORDINARY_LABELS,
+  nodeColor,
   nodeRadius,
   updateNodeLabelVisibility,
   type NodeMesh,
@@ -46,6 +47,11 @@ describe("knowledge-space node sizing", () => {
     updateNodeLabelVisibility(meshes, new THREE.PerspectiveCamera(), null, null);
 
     expect(countNodeLabels(meshes)).toBe(MAX_ORDINARY_LABELS);
+  });
+
+  it("gives virtual hubs a distinct amber color", () => {
+    expect(nodeColor({ domain: "virtual", is_virtual: true })).toBe(0xf59e0b);
+    expect(nodeColor({ domain: "virtual", is_virtual: false })).not.toBe(0xf59e0b);
   });
 });
 

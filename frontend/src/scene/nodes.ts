@@ -15,6 +15,10 @@ export function domainColor(domain: string): number {
   return DOMAIN_COLORS[hash % DOMAIN_COLORS.length];
 }
 
+export function nodeColor(node: Pick<KnowledgeSpaceNode, "domain" | "is_virtual">): number {
+  return node.is_virtual ? 0xf59e0b : domainColor(node.domain);
+}
+
 export function createNodeMeshes(
   artifact: KnowledgeSpaceArtifact,
   group: THREE.Group,
@@ -34,14 +38,16 @@ export function nodeRadius(explicitLinkCount: number): number {
 
 function createNodeMesh(node: KnowledgeSpaceNode): NodeMesh {
   const radius = nodeRadius(node.explicit_link_count);
+  const color = nodeColor(node);
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(radius, 20, 14),
     new THREE.MeshStandardMaterial({
-      color: domainColor(node.domain),
-      emissive: domainColor(node.domain),
+      color,
+      emissive: color,
       emissiveIntensity: 0.28,
       roughness: 0.35,
       metalness: 0.15,
+      wireframe: node.is_virtual,
     }),
   );
   mesh.position.set(node.position.x, node.position.y, node.position.z);
@@ -136,7 +142,7 @@ function createNodeLabel(title: string, radius: number, isHub: boolean): THREE.S
     new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }),
   );
   sprite.position.set(0, radius + 0.11, 0);
-  sprite.scale.set(isHub ? 1.35 : 1.0, isHub ? 0.21 : 0.16, 1);
+  sprite.scale.set(isHub ? 0.78 : 0.58, isHub ? 0.13 : 0.095, 1);
   sprite.renderOrder = 3;
   return sprite;
 }

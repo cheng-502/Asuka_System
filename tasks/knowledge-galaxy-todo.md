@@ -10,8 +10,8 @@
 - [x] Checkpoint B: Offline Artifact review
 - [x] Task 6: Frontend layout state and interruption-safe transitions
 - [x] Task 7: Dynamic edges and relationship visibility
-- [ ] Checkpoint C: Animated scene review
-- [ ] Task 8: Dual-view control and right toolbar
+- [x] Checkpoint C: Animated scene review
+- [x] Task 8: Dual-view control and right toolbar
 - [ ] Task 9a: Compact collapse/expand transition
 - [ ] Task 9b: Rotation scheduler and interaction ownership
 - [ ] Task 10: Real 351-note Artifact, profiling, and release verification

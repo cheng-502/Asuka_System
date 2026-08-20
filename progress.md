@@ -352,3 +352,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Idle, selected, and compact visibility policies now cover parent paths, direct children, complete incident Wikilinks, qualified Top-5 semantics, and legacy v1 merged-Wikilink compatibility.
 - Hub labels remain visible; ordinary labels use distance LOD, interaction priority, lazy creation, immediate disposal, disabled mipmaps, and an 80-label resident cap.
 - Verification: 143 frontend tests, TypeScript, isolated production build, browser smoke against the private 351-note v1 Artifact, clean browser console, and `git diff --check` passed. Independent reviews approved after batching, endpoint, resource, v1, and topic-color fixes.
+
+## 2026-08-21 — Knowledge Galaxy Task 8 and Checkpoint C complete
+
+- Added two independent top-level view controls for Semantic Space and Topic Galaxy, with capability-aware availability for v1 and v2 Artifacts.
+- Added the reserved right-side feature toolbar; its first Compact Globe action remains intentionally disabled until Task 9a owns the transition behavior.
+- Virtual hierarchy Hubs now use an amber wireframe treatment while real notes retain the semantic-node visual language.
+- Empty-Vault UI is driven by persisted real note count, so generated virtual Hubs cannot disguise an empty source Vault.
+- Responsive layout keeps the view switcher, camera preview, detail panel, and toolbar separated down to 320 px width.
+- Verification: 148 frontend tests, TypeScript, isolated production build, browser v2 transition smoke, 320 px overlap check, and `git diff --check` passed. Independent specification and quality reviews approved with no remaining P1/P2 findings.

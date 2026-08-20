@@ -1,0 +1,141 @@
+{
+  "version": 2,
+  "generated_at": "2026-08-21T00:00:00Z",
+  "pipeline": { "version": "mvp1.6.0" },
+  "embedding": {
+    "model": "BAAI/bge-m3",
+    "dimension": 1024,
+    "metric": "cosine",
+    "normalized": true
+  },
+  "umap": {
+    "n_components": 3,
+    "random_state": 42,
+    "metric": "cosine"
+  },
+  "layout_generation": {
+    "version": "galaxy-layout-v1",
+    "galaxy": { "algorithm": "fibonacci-orbit", "seed": 42 },
+    "compact": { "algorithm": "fibonacci-shell", "seed": 42 }
+  },
+  "relationships": {
+    "max_neighbors": 5,
+    "min_similarity": 0.6,
+    "hierarchy_min_similarity": 0.6
+  },
+  "source": {
+    "vault_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "note_count": 4
+  },
+  "nodes": [
+    {
+      "id": "topics/vision.md",
+      "title": "机器人视觉",
+      "summary": "Vision topic hub.",
+      "domain": "topics",
+      "layouts": {
+        "semantic": { "x": 0.1, "y": 0.2, "z": 0.3 },
+        "galaxy": { "x": 0.0, "y": 0.0, "z": 0.0 },
+        "compact": { "x": 0.0, "y": 0.0, "z": 0.0 }
+      },
+      "hierarchy": {
+        "role": "hub",
+        "parent_id": null,
+        "depth": 0,
+        "assignment": "explicit",
+        "topic_root_id": "topics/vision.md"
+      },
+      "explicit_link_count": 1
+    },
+    {
+      "id": "topics/detection.md",
+      "title": "目标检测",
+      "summary": "Detection sub-hub.",
+      "domain": "topics",
+      "layouts": {
+        "semantic": { "x": 0.2, "y": 0.25, "z": 0.35 },
+        "galaxy": { "x": 0.45, "y": 0.0, "z": 0.0 },
+        "compact": { "x": 0.12, "y": 0.0, "z": 0.0 }
+      },
+      "hierarchy": {
+        "role": "hub",
+        "parent_id": "topics/vision.md",
+        "depth": 1,
+        "assignment": "explicit",
+        "topic_root_id": "topics/vision.md"
+      },
+      "explicit_link_count": 1
+    },
+    {
+      "id": "notes/yolo.md",
+      "title": "YOLO",
+      "summary": "Detection model notes.",
+      "domain": "notes",
+      "layouts": {
+        "semantic": { "x": 0.25, "y": 0.28, "z": 0.4 },
+        "galaxy": { "x": 0.7, "y": 0.1, "z": 0.0 },
+        "compact": { "x": 0.28, "y": 0.1, "z": 0.0 }
+      },
+      "hierarchy": {
+        "role": "note",
+        "parent_id": "topics/detection.md",
+        "depth": 2,
+        "assignment": "wikilink",
+        "topic_root_id": "topics/vision.md"
+      },
+      "explicit_link_count": 1
+    },
+    {
+      "id": "misc/dentist.md",
+      "title": "牙医预约",
+      "summary": "Unassigned personal note.",
+      "domain": "misc",
+      "layouts": {
+        "semantic": { "x": -0.8, "y": -0.3, "z": 0.1 },
+        "galaxy": { "x": -0.5, "y": 0.0, "z": 0.0 },
+        "compact": { "x": -0.2, "y": 0.0, "z": 0.0 }
+      },
+      "hierarchy": {
+        "role": "note",
+        "parent_id": "virtual:unassigned",
+        "depth": 1,
+        "assignment": "unassigned",
+        "topic_root_id": "virtual:unassigned"
+      },
+      "explicit_link_count": 0
+    }
+  ],
+  "virtual_nodes": [
+    {
+      "id": "virtual:unassigned",
+      "title": "未归类",
+      "layouts": {
+        "semantic": { "x": -0.5, "y": 0.0, "z": 0.0 },
+        "galaxy": { "x": -0.5, "y": 0.0, "z": 0.0 },
+        "compact": { "x": -0.1, "y": 0.0, "z": 0.0 }
+      },
+      "hierarchy": {
+        "role": "hub",
+        "parent_id": null,
+        "depth": 0,
+        "assignment": "unassigned",
+        "topic_root_id": "virtual:unassigned"
+      }
+    }
+  ],
+  "links": [
+    {
+      "source": "topics/vision.md",
+      "target": "topics/detection.md",
+      "types": ["wikilink"],
+      "is_unresolved": false
+    },
+    {
+      "source": "topics/detection.md",
+      "target": "notes/yolo.md",
+      "types": ["wikilink", "semantic"],
+      "similarity": 0.88,
+      "is_unresolved": false
+    }
+  ]
+}

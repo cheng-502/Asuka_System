@@ -44,6 +44,98 @@ input {
   height: 100%;
 }
 
+#view-controls-root {
+  position: absolute;
+  z-index: 5;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.view-switcher {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 999px;
+  background: rgba(9, 22, 39, 0.82);
+  backdrop-filter: blur(0.8rem);
+}
+
+.view-switcher-button,
+.function-toolbar-button {
+  border: 0;
+  color: #9db5cc;
+  background: transparent;
+  cursor: pointer;
+}
+
+.view-switcher-button {
+  padding: 0.48rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+}
+
+.view-switcher-button[aria-pressed="true"] {
+  color: #e6fbff;
+  background: rgba(45, 212, 191, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.35);
+}
+
+#function-toolbar-root {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+}
+
+.function-toolbar {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.4rem;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 0.8rem;
+  background: rgba(9, 22, 39, 0.82);
+  backdrop-filter: blur(0.8rem);
+}
+
+.function-toolbar-button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.55rem;
+  font-size: 1.1rem;
+}
+
+.view-switcher-button:hover:not(:disabled),
+.view-switcher-button:focus-visible,
+.function-toolbar-button:hover:not(:disabled),
+.function-toolbar-button:focus-visible {
+  color: #d9fbff;
+  background: rgba(103, 232, 249, 0.14);
+  outline: none;
+}
+
+.view-switcher-button:disabled,
+.function-toolbar-button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.empty-state {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 0.75rem;
+  color: #b8cbe0;
+  background: rgba(9, 22, 39, 0.82);
+}
+
 .hand-pointer {
   position: absolute;
   z-index: 6;
@@ -312,7 +404,7 @@ h1 {
   position: absolute;
   z-index: 3;
   top: 2rem;
-  right: 2rem;
+  right: 5.25rem;
   width: min(24rem, calc(100vw - 4rem));
   min-height: 12rem;
   padding: 1.25rem;
@@ -381,6 +473,13 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  #view-controls-root {
+    top: 0.5rem;
+  }
+
+  #function-toolbar-root {
+    right: 0.5rem;
+  }
   #guide-root {
     top: 1rem;
     right: 1rem;
@@ -401,7 +500,7 @@ h1 {
 
   .detail-panel {
     top: auto;
-    right: 1rem;
+    right: 4rem;
     bottom: 1rem;
     left: 1rem;
     width: auto;
@@ -410,5 +509,11 @@ h1 {
 
   .status-card h1 {
     font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  #view-controls-root {
+    top: 18.25rem;
   }
 }
