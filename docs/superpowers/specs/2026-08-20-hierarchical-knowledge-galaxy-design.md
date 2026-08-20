@@ -1,7 +1,7 @@
 # Auaka Hierarchical Knowledge Galaxy Design
 
-**Date:** 2026-08-20  
-**Status:** Approved design direction; awaiting written-spec review  
+**Date:** 2026-08-20
+**Status:** Approved design direction; awaiting written-spec review
 **Target:** Post–MVP-1.5 spatial visualization increment
 
 ## 1. Objective
