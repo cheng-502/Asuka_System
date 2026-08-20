@@ -343,3 +343,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Node mesh identity, selection, and hover state survive layout changes while the camera transitions to deterministic coordinate bounds.
 - Hand and layout camera control now share composable ownership: hand-only transforms remain live, layout transitions exclusively own the camera, pending inertia is flushed, and controls restore only after the final owner releases.
 - Verification: 135 frontend tests, TypeScript, and `git diff --check` passed. Independent specification and quality reviews approved after camera ownership and rollback hardening.
+
+## 2026-08-21 — Knowledge Galaxy Task 7 complete
+
+- Added hierarchy edges derived from persisted parent IDs while preserving separate Wikilink, semantic, and merged relationship semantics.
+- Edges are batched into at most four reusable `LineSegments` geometries with contiguous typed buffers; transition frames update only visible slots and never recreate Three.js edge objects.
+- Hierarchy batches use per-vertex topic-root colors, semantic edges remain dashed, and merged explicit/inferred relations have a distinct visual treatment.
+- Idle, selected, and compact visibility policies now cover parent paths, direct children, complete incident Wikilinks, qualified Top-5 semantics, and legacy v1 merged-Wikilink compatibility.
+- Hub labels remain visible; ordinary labels use distance LOD, interaction priority, lazy creation, immediate disposal, disabled mipmaps, and an 80-label resident cap.
+- Verification: 143 frontend tests, TypeScript, isolated production build, browser smoke against the private 351-note v1 Artifact, clean browser console, and `git diff --check` passed. Independent reviews approved after batching, endpoint, resource, v1, and topic-color fixes.

@@ -1,8 +1,19 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { KnowledgeLayoutName, KnowledgeSpaceArtifact } from "../data/types";
-import { createRelationshipEdges } from "./edges";
-import { createNodeMeshes, setNodeState, type NodeMesh } from "./nodes";
+import {
+  applyEdgeVisibility,
+  createDynamicEdges,
+  updateDynamicEdges,
+  type SceneEdge,
+} from "./edges";
+import {
+  createNodeMeshes,
+  disposeNodeMesh,
+  setNodeState,
+  updateNodeLabelVisibility,
+  type NodeMesh,
+} from "./nodes";
 import { nextPinchSelection, normalizedPointerToNdc, pickNode } from "./raycast";
 import { calculateCameraFrame } from "./cameraFrame";
 import {
@@ -10,6 +21,7 @@ import {
   LAYOUT_TRANSITION_MS,
   RetargetableVectorTransition,
 } from "./LayoutTransition";
+import { calculateEdgeVisibility } from "./visibility";
 
 export class KnowledgeScene {
   readonly scene = new THREE.Scene();
@@ -29,6 +41,8 @@ export class KnowledgeScene {
   private readonly onSelect?: (nodeId: string | null) => void;
   private readonly onLayoutChange?: (layout: KnowledgeLayoutName) => void;
   private readonly cameraTransition: RetargetableVectorTransition;
+  private readonly dynamicEdges: SceneEdge[];
+  private readonly artifact: KnowledgeSpaceArtifact;
   private readonly controlOwners = new Set<"hand" | "layout">();
   private controlBaseState: { enabled: boolean; damping: boolean } | null = null;
 
@@ -42,6 +56,7 @@ export class KnowledgeScene {
     } = {},
   ) {
     this.container = container;
+    this.artifact = artifact;
     this.onHover = callbacks.onHover;
     this.onSelect = callbacks.onSelect;
     this.onLayoutChange = callbacks.onLayoutChange;
@@ -61,7 +76,8 @@ export class KnowledgeScene {
     this.scene.add(this.nodeGroup, this.edgeGroup);
     this.nodeMeshes = createNodeMeshes(artifact, this.nodeGroup);
     this.layoutState = new KnowledgeLayoutState(artifact.nodes, artifact.capabilities.layouts);
-    createRelationshipEdges(artifact, this.nodeMeshes, this.edgeGroup);
+    this.dynamicEdges = createDynamicEdges(artifact, this.nodeMeshes, this.edgeGroup);
+    this.refreshEdgeVisibility();
     const frame = calculateCameraFrame(
       Array.from(this.nodeMeshes.values(), (mesh) => mesh.position),
       this.camera.fov,
@@ -96,8 +112,7 @@ export class KnowledgeScene {
     this.renderer.domElement.removeEventListener("pointerdown", this.handlePointerDown);
     this.controls.dispose();
     this.nodeMeshes.forEach((mesh) => {
-      mesh.geometry.dispose();
-      mesh.material.dispose();
+      disposeNodeMesh(mesh);
     });
     this.edgeGroup.traverse((object) => {
       if (object instanceof THREE.Line) {
@@ -111,6 +126,7 @@ export class KnowledgeScene {
 
   clearSelection(): void {
     this.applySelectedState(null);
+    this.refreshEdgeVisibility();
     this.onSelect?.(null);
   }
 
@@ -152,6 +168,7 @@ export class KnowledgeScene {
 
   selectNode(nodeId: string | null): void {
     this.applySelectedState(nodeId);
+    this.refreshEdgeVisibility();
     this.onSelect?.(nodeId);
   }
 
@@ -193,8 +210,10 @@ export class KnowledgeScene {
       );
       if (reducedMotion) {
         applyNodePositionBuffer(this.layoutState.nodeIds, this.layoutState.current, this.nodeMeshes);
+        updateDynamicEdges(this.dynamicEdges, this.nodeMeshes);
         this.applyCameraValues(this.cameraTransition.current);
         this.releaseControlOwnership("layout");
+        this.refreshEdgeVisibility();
         this.onLayoutChange?.(this.layoutState.layout);
       }
     } catch (error) {
@@ -246,6 +265,7 @@ export class KnowledgeScene {
     this.animationFrame = requestAnimationFrame(this.animate);
     this.applyTransitions(timestampMs);
     if (shouldUpdateOrbitControls(this.controlOwners)) this.controls.update();
+    updateNodeLabelVisibility(this.nodeMeshes, this.camera, this.selectedNodeId, this.hoveredNodeId);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -254,6 +274,7 @@ export class KnowledgeScene {
     const positions = this.layoutState.sample(timestampMs);
     if (wasTransitioning || this.layoutState.isTransitioning) {
       applyNodePositionBuffer(this.layoutState.nodeIds, positions, this.nodeMeshes);
+      updateDynamicEdges(this.dynamicEdges, this.nodeMeshes);
     }
     const cameraWasTransitioning = this.cameraTransition.active;
     const camera = this.cameraTransition.sample(timestampMs);
@@ -266,6 +287,7 @@ export class KnowledgeScene {
       && !this.cameraTransition.active
     ) {
       this.releaseControlOwnership("layout");
+      this.refreshEdgeVisibility();
       this.onLayoutChange?.(this.layoutState.layout);
     }
   }
@@ -335,6 +357,20 @@ export class KnowledgeScene {
     this.controls.target.copy(target);
     this.camera.zoom = zoom;
     this.camera.updateProjectionMatrix();
+  }
+
+  private refreshEdgeVisibility(): void {
+    applyEdgeVisibility(
+      this.dynamicEdges,
+      calculateEdgeVisibility(
+        this.dynamicEdges,
+        this.artifact.nodes,
+        this.selectedNodeId,
+        this.layoutState.layout,
+        this.artifact.capabilities.hierarchy,
+      ),
+    );
+    updateDynamicEdges(this.dynamicEdges, this.nodeMeshes);
   }
 }
 

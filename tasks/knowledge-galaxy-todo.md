@@ -9,7 +9,7 @@
 - [x] Task 5: Artifact v2 generation integration
 - [x] Checkpoint B: Offline Artifact review
 - [x] Task 6: Frontend layout state and interruption-safe transitions
-- [ ] Task 7: Dynamic edges and relationship visibility
+- [x] Task 7: Dynamic edges and relationship visibility
 - [ ] Checkpoint C: Animated scene review
 - [ ] Task 8: Dual-view control and right toolbar
 - [ ] Task 9a: Compact collapse/expand transition

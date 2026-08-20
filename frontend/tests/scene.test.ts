@@ -184,7 +184,7 @@ describe("scene interaction helpers", () => {
   it("uses solid Wikilinks, dashed semantic links, and hides non-renderable links", () => {
     expect(edgeVisualStyle({ source: "a", target: "b", types: ["wikilink"] })).toBe("solid");
     expect(edgeVisualStyle({ source: "a", target: "b", types: ["semantic"], similarity: 0.8 })).toBe("dashed");
-    expect(edgeVisualStyle({ source: "a", target: "b", types: ["wikilink", "semantic"], similarity: 0.8 })).toBe("solid");
+    expect(edgeVisualStyle({ source: "a", target: "b", types: ["wikilink", "semantic"], similarity: 0.8 })).toBe("merged");
     expect(edgeVisualStyle({ source: "a", target: "missing", types: ["wikilink"], is_unresolved: true, unresolved_target: "missing" })).toBe("hidden");
     expect(edgeVisualStyle({ source: "a", target: "a", types: ["wikilink"] })).toBe("hidden");
   });
