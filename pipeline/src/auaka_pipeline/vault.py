@@ -75,6 +75,10 @@ def indexing_report(report: VaultScanReport) -> dict[str, object]:
                 "title": note.title,
                 "domain": note.domain,
                 "wikilink_count": len(note.wikilinks),
+                "knowledge_role": note.knowledge_role,
+                "knowledge_parent": (
+                    note.knowledge_parent.raw_target if note.knowledge_parent else None
+                ),
             }
             for note in report.notes
         ],

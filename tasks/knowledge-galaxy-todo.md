@@ -2,8 +2,8 @@
 
 - [x] Task 1a: Strict Artifact v2 wire contract and Python validation
 - [x] Task 1b: Frontend wire/runtime normalization and v1 compatibility
-- [ ] Task 2: Explicit hierarchy Frontmatter parsing
-- [ ] Checkpoint A: Contract and authoring review
+- [x] Task 2: Explicit hierarchy Frontmatter parsing
+- [x] Checkpoint A: Contract and authoring review
 - [ ] Task 3: Deterministic multi-level hierarchy resolution
 - [ ] Task 4: Galaxy and compact coordinate generation
 - [ ] Task 5: Artifact v2 generation integration

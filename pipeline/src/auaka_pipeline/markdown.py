@@ -5,9 +5,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import PurePosixPath
+from typing import Literal
 
 
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]]+)\]\]")
+EXACT_WIKILINK_PATTERN = re.compile(r"^\[\[([^\]]+)\]\]$")
 HEADING_PATTERN = re.compile(r"^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$")
 FRONTMATTER_FIELD_PATTERN = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*?)\s*$")
 
@@ -33,6 +35,10 @@ class ParsedNote:
     wikilinks: tuple[WikilinkReference, ...]
     content_hash: str
     source_text: str = ""
+    knowledge_role: Literal["hub"] | None = None
+    knowledge_parent: WikilinkReference | None = None
+    knowledge_role_raw: str | None = None
+    knowledge_parent_raw: str | None = None
 
 
 def parse_markdown(
@@ -48,6 +54,12 @@ def parse_markdown(
     title = frontmatter.get("title") or _heading_title(body) or PurePosixPath(note_id).stem
     links = tuple(_extract_wikilinks(_without_fenced_code(body)))
     summary = _extract_summary(_without_fenced_code(body), summary_max_chars)
+    knowledge_role_raw = frontmatter.get("knowledge_role")
+    knowledge_parent_raw = frontmatter.get("knowledge_parent")
+    knowledge_role: Literal["hub"] | None = (
+        "hub" if knowledge_role_raw and knowledge_role_raw.casefold() == "hub" else None
+    )
+    knowledge_parent = _parse_exact_wikilink(knowledge_parent_raw)
     path = PurePosixPath(note_id)
     domain = path.parts[0] if len(path.parts) > 1 else "root"
 
@@ -59,6 +71,10 @@ def parse_markdown(
         wikilinks=links,
         content_hash=content_hash,
         source_text=normalized_text,
+        knowledge_role=knowledge_role,
+        knowledge_parent=knowledge_parent,
+        knowledge_role_raw=knowledge_role_raw,
+        knowledge_parent_raw=knowledge_parent_raw,
     )
 
 
@@ -118,17 +134,33 @@ def _extract_summary(body: str, max_chars: int) -> str:
 def _extract_wikilinks(body: str) -> list[WikilinkReference]:
     links: list[WikilinkReference] = []
     for match in WIKILINK_PATTERN.finditer(body):
-        target_and_heading, alias = (match.group(1).split("|", 1) + [None])[:2]
-        target_and_heading = target_and_heading.strip()
-        target, separator, heading = target_and_heading.partition("#")
-        links.append(
-            WikilinkReference(
-                raw_target=target.strip(),
-                alias=alias.strip() if alias else None,
-                heading=heading.strip() if separator and heading.strip() else None,
-            )
-        )
+        reference = _parse_wikilink_content(match.group(1))
+        if reference is not None:
+            links.append(reference)
     return links
+
+
+def _parse_exact_wikilink(value: str | None) -> WikilinkReference | None:
+    if value is None:
+        return None
+    match = EXACT_WIKILINK_PATTERN.fullmatch(value.strip())
+    return _parse_wikilink_content(match.group(1), require_target=True) if match else None
+
+
+def _parse_wikilink_content(
+    content: str, *, require_target: bool = False
+) -> WikilinkReference | None:
+    target_and_heading, alias = (content.split("|", 1) + [None])[:2]
+    target_and_heading = target_and_heading.strip()
+    target, separator, heading = target_and_heading.partition("#")
+    target = target.strip()
+    if require_target and not target:
+        return None
+    return WikilinkReference(
+        raw_target=target,
+        alias=alias.strip() if alias and alias.strip() else None,
+        heading=heading.strip() if separator and heading.strip() else None,
+    )
 
 
 def _without_fenced_code(body: str) -> str:

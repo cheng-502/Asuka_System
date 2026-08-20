@@ -65,7 +65,7 @@ class VaultScanTest(unittest.TestCase):
                 "# 不应成为摘要\n\n"
                 "这是第一段 **摘要**，关联 [[目标检测|检测方法]]。\n\n"
                 "第二段不会进入摘要。\n\n"
-                "[[Folder/Note#细节]]\n",
+                "[[Folder/Note#细节]] [[#本节]] [[#^block-id]]\n",
                 encoding="utf-8",
             )
 
@@ -76,8 +76,58 @@ class VaultScanTest(unittest.TestCase):
         self.assertEqual(note.summary, "这是第一段 摘要，关联 检测方法。")
         self.assertEqual(
             [(link.raw_target, link.alias, link.heading) for link in note.wikilinks],
-            [("目标检测", "检测方法", None), ("Folder/Note", None, "细节")],
+            [
+                ("目标检测", "检测方法", None),
+                ("Folder/Note", None, "细节"),
+                ("", None, "本节"),
+                ("", None, "^block-id"),
+            ],
         )
+
+    def test_parses_explicit_hub_and_quoted_or_unquoted_parent_wikilinks(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            (root / "quoted.md").write_text(
+                '---\nknowledge_role: HUB\nknowledge_parent: "[[机器人视觉]]"\n---\n正文。',
+                encoding="utf-8",
+            )
+            (root / "unquoted.md").write_text(
+                "---\nknowledge_parent: [[Topics/视觉系统|视觉]]\n---\n正文。",
+                encoding="utf-8",
+            )
+
+            report = scan_vault(root)
+
+        notes = {note.note_id: note for note in report.notes}
+        self.assertEqual(notes["quoted.md"].knowledge_role, "hub")
+        self.assertEqual(notes["quoted.md"].knowledge_role_raw, "HUB")
+        self.assertEqual(notes["quoted.md"].knowledge_parent.raw_target, "机器人视觉")
+        self.assertEqual(notes["quoted.md"].knowledge_parent_raw, "[[机器人视觉]]")
+        self.assertEqual(notes["unquoted.md"].knowledge_parent.raw_target, "Topics/视觉系统")
+        self.assertEqual(notes["unquoted.md"].knowledge_parent.alias, "视觉")
+
+    def test_invalid_hierarchy_metadata_is_inert_and_preserves_existing_parsing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            (root / "note.md").write_text(
+                "---\n"
+                "title: 安全标题\n"
+                "knowledge_role: !!python/object/apply:os.system\n"
+                "knowledge_parent: __import__('os').system('echo unsafe')\n"
+                "---\n\n"
+                "第一段关联 [[正常链接]]。\n",
+                encoding="utf-8",
+            )
+
+            note = scan_vault(root).notes[0]
+
+        self.assertIsNone(note.knowledge_role)
+        self.assertEqual(note.knowledge_role_raw, "!!python/object/apply:os.system")
+        self.assertIsNone(note.knowledge_parent)
+        self.assertEqual(note.knowledge_parent_raw, "__import__('os').system('echo unsafe')")
+        self.assertEqual(note.title, "安全标题")
+        self.assertEqual(note.summary, "第一段关联 正常链接。")
+        self.assertEqual([link.raw_target for link in note.wikilinks], ["正常链接"])
 
     def test_resolves_links_and_reports_unresolved_targets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_dir:

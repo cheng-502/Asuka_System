@@ -301,3 +301,11 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - The UI reports `source.note_count`, so generated virtual hubs are never counted as Vault notes.
 - Frontend validation uses the same shared invalid mutation corpus as Python and enforces cross-record hierarchy invariants before normalization.
 - Verification: 19 frontend test files and 126 tests passed, TypeScript passed, and production build verification uses Vite's runner config loader because Windows denied writes to the default `.vite-temp` directory.
+
+## 2026-08-21 — Knowledge Galaxy Task 2 and Checkpoint A complete
+
+- The read-only Markdown parser now recognizes `knowledge_role: hub` and quoted or unquoted `knowledge_parent` Obsidian Wikilinks without introducing a YAML execution path.
+- Parsed notes retain both validated hierarchy metadata and inert raw scalar values so later resolution can emit useful warnings for invalid declarations.
+- Body Wikilinks remain backward compatible, including same-note heading and block references; only a hierarchy parent requires a concrete target note.
+- The Vault indexing report exposes parsed role and parent targets for read-only hierarchy preflight diagnostics.
+- Verification: 55 non-projection Pipeline tests and `git diff --check` passed. Independent specification and quality reviews approved the contract and authoring behavior.
