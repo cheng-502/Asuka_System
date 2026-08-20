@@ -1,7 +1,7 @@
 # Hierarchical Knowledge Galaxy Todo
 
 - [x] Task 1a: Strict Artifact v2 wire contract and Python validation
-- [ ] Task 1b: Frontend wire/runtime normalization and v1 compatibility
+- [x] Task 1b: Frontend wire/runtime normalization and v1 compatibility
 - [ ] Task 2: Explicit hierarchy Frontmatter parsing
 - [ ] Checkpoint A: Contract and authoring review
 - [ ] Task 3: Deterministic multi-level hierarchy resolution

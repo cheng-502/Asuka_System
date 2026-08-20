@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fixture from "../../contracts/fixtures/knowledge-space.fixture.json";
+import v2Fixture from "../../contracts/fixtures/knowledge-space-v2.fixture.json";
+import invalidCorpus from "../../contracts/fixtures/knowledge-space-invalid-cases.fixture.json";
 import { ArtifactValidationError, validateArtifact } from "../src/data/validateArtifact";
 
 function validArtifact() {
@@ -61,6 +63,18 @@ describe("validateArtifact", () => {
     expect(validateArtifact(validArtifact())).toEqual(validArtifact());
   });
 
+  it("validates the strict shared v2 fixture", () => {
+    expect(validateArtifact(v2Fixture)).toEqual(v2Fixture);
+  });
+
+  it("rejects every case in the shared invalid fixture corpus", () => {
+    for (const fixtureCase of invalidCorpus.cases) {
+      const artifact = structuredClone(fixtureCase.base_artifact === "v1" ? fixture : v2Fixture) as unknown;
+      applyFixtureMutations(artifact, fixtureCase.mutations);
+      expect(() => validateArtifact(artifact), fixtureCase.name).toThrow(ArtifactValidationError);
+    }
+  });
+
   it("allows a resolved link without optional unresolved metadata", () => {
     const artifact = validArtifact();
     delete artifact.links[0].is_unresolved;
@@ -89,3 +103,18 @@ describe("validateArtifact", () => {
     expect(() => validateArtifact(artifact)).toThrow(ArtifactValidationError);
   });
 });
+
+function applyFixtureMutations(
+  artifact: unknown,
+  mutations: readonly { operation: string; path: readonly (string | number)[]; value?: unknown }[],
+): void {
+  for (const mutation of mutations) {
+    let target = artifact as Record<string | number, unknown>;
+    for (const segment of mutation.path.slice(0, -1)) {
+      target = target[segment] as Record<string | number, unknown>;
+    }
+    const key = mutation.path.at(-1)!;
+    if (mutation.operation === "delete") delete target[key];
+    else target[key] = mutation.value;
+  }
+}

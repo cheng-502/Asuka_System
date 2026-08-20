@@ -131,7 +131,7 @@ async function boot(): Promise<void> {
       }
     }
     window.addEventListener("beforeunload", () => tracker?.stop());
-    statusCopy.textContent = `${artifact.nodes.length} notes loaded from the versioned artifact. Mouse orbit is available while hand tracking is offline.`;
+    statusCopy.textContent = `${artifact.source.note_count} notes loaded from the versioned artifact. Mouse orbit is available while hand tracking is offline.`;
     statusPill.classList.add("is-ready");
     statusPill.lastChild!.textContent = " Knowledge space ready";
   } catch (error) {

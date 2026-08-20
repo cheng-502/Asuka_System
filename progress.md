@@ -292,3 +292,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added Python v2 typed boundaries and cross-record validation for ID namespaces, note counts, finite layouts, hub/assignment/parent/depth/topic-root invariants, parent cycles, and real-only knowledge links.
 - Existing generation remains v1 until Task 5; Task 1a changes only read/validation capability.
 - Verification: 26 focused model/artifact tests and 52 non-projection Pipeline tests passed. Projection metadata test passed; unchanged deterministic UMAP execution was isolated after the environment spent over seven minutes compiling without failure output.
+
+## 2026-08-21 — Knowledge Galaxy Task 1b complete
+
+- Added strict TypeScript wire types and one normalized runtime graph for Artifact v1 and v2.
+- Legacy v1 artifacts remain semantic-only; v2 merges virtual hubs into the runtime node collection while removing the wire-only `virtual_nodes` collection.
+- Runtime coordinates, layouts, hierarchy records, and relationship arrays are copied so loaded data cannot retain mutable aliases to the wire payload.
+- The UI reports `source.note_count`, so generated virtual hubs are never counted as Vault notes.
+- Frontend validation uses the same shared invalid mutation corpus as Python and enforces cross-record hierarchy invariants before normalization.
+- Verification: 19 frontend test files and 126 tests passed, TypeScript passed, and production build verification uses Vite's runner config loader because Windows denied writes to the default `.vite-temp` directory.

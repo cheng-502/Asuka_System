@@ -186,14 +186,24 @@
               "types": { "type": "array", "contains": { "const": "semantic" } }
             }
           },
-          "then": { "required": ["similarity"] }
+          "then": {
+            "required": ["similarity"],
+            "properties": {
+              "similarity": { "type": "number", "minimum": -1, "maximum": 1 }
+            }
+          }
         },
         {
           "if": {
             "required": ["is_unresolved"],
             "properties": { "is_unresolved": { "const": true } }
           },
-          "then": { "required": ["unresolved_target"] }
+          "then": {
+            "required": ["unresolved_target"],
+            "properties": {
+              "unresolved_target": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
         }
       ]
     },
