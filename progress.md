@@ -370,3 +370,15 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added a pure auto-rotation scheduler at 0.035 rad/s with a 2-second recovery delay and immediate blockers for mouse, wheel, hand, selection, page visibility, and reduced motion.
 - Compact rotation begins only after collapse completion. Visibility changes are handled outside RAF, and expansion smoothly returns accumulated rotation to zero so persisted Galaxy world coordinates are restored.
 - Verification: 165 frontend tests, TypeScript, browser state-gate/reversal/compact smoke, and `git diff --check` passed. Independent Task 9a and Task 9b reviews approved after transition-continuity and lifecycle fixes.
+
+## 2026-08-21 — Knowledge Galaxy Task 10 real-data and performance gates complete
+
+- Read-only Vault preflight now reports 353 included notes, 36 exclusions, 575 unresolved Wikilinks, 0 read errors, 0 explicit Hubs, and 0 explicit Parents. The two-note increase from the historical 351-note baseline is recorded rather than hidden.
+- Generated a private, schema-validated Artifact v2 with 353 notes, 1,424 relationships, source hash `c46d764afdd2f7c137724ad262c06f03520875c6fcb0eab21eb7a9dd95e2cf78`, and 353 truthful unassigned fallback records.
+- The private Artifact and embedding cache were hash-verified into Git-ignored root and frontend-preview paths; no Vault content or vector data is tracked.
+- Browser acceptance loaded both real views, selected `MOC - 计算机学习`, and rendered its Note ID, summary, Wikilink, and Semantic Neighbor detail tabs.
+- Added allocation-safe fixed-window frame instrumentation and a deterministic public performance-Artifact generator. Edge opacity updates no longer allocate a Set proportional to edge count on every frame.
+- Measured 353 real nodes at 116.89 average FPS over a 10-second post-warmup sample. A 1,000-note synthetic Artifact under continuous layout transitions averaged 75.75 FPS with a 24.10 ms longest frame.
+- Release metadata is advanced and consistency-tested at 1.5.0. The frontend passed 168 tests, TypeScript, isolated production build, and diff checks; Pipeline passed 75 tests with one optional real-model skip when the deterministic UMAP JIT case was excluded.
+- The isolated deterministic UMAP test remained in first-run Numba compilation for more than 15 minutes and was stopped without failure output. Equivalent production projection completed successfully during the private 353-note generation with persisted random seed 42.
+- Independent quality review approved. Final specification review found only the pre-release absence of the tag and missing documented pytest dependency; the `dev` extra and reproducible install command now resolve the dependency finding, and the reviewed release commit is tagged and pushed as `v1.5.0`.

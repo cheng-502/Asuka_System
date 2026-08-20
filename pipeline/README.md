@@ -18,12 +18,18 @@ The default multilingual model is `BAAI/bge-m3`. Install the optional local
 model runtime only when running real embeddings:
 
 ```powershell
-python -m pip install -e ".[embedding]"
+python -m pip install -e ".[embedding,dev]"
 ```
 
 Unit tests use a deterministic fake embedder, so they do not download a model.
 High-dimensional vectors are stored under the embedding cache directory and
 are not included in `knowledge-space.json`.
+
+Run the complete Pipeline suite from the repository root:
+
+```powershell
+python -m pytest pipeline/tests
+```
 
 To inspect a Vault without writing to it:
 

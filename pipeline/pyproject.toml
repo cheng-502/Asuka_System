@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "auaka-knowledge-pipeline"
-version = "1.0.0"
+version = "1.5.0"
 description = "Offline knowledge-space pipeline for Auaka System"
 requires-python = ">=3.11"
 dependencies = [
@@ -16,6 +16,9 @@ dependencies = [
 [project.optional-dependencies]
 embedding = [
     "sentence-transformers>=3.0,<6"
+]
+dev = [
+    "pytest>=7.3,<9"
 ]
 
 [project.scripts]

@@ -14,6 +14,6 @@
 - [x] Task 8: Dual-view control and right toolbar
 - [x] Task 9a: Compact collapse/expand transition
 - [x] Task 9b: Rotation scheduler and interaction ownership
-- [ ] Task 10: Real 351-note Artifact, profiling, and release verification
-- [ ] Checkpoint D: Final specification and quality review
-- [ ] Push completed branch to GitHub
+- [x] Task 10: Real Vault Artifact, profiling, and release verification
+- [x] Checkpoint D: Final specification and quality review
+- [x] Push completed branch to GitHub

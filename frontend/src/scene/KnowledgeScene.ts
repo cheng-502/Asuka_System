@@ -26,6 +26,7 @@ import {
 } from "./LayoutTransition";
 import { calculateEdgeVisibility } from "./visibility";
 import { AutoRotationController } from "./AutoRotationController";
+import { FrameMetrics } from "./FrameMetrics";
 
 export class KnowledgeScene {
   readonly scene = new THREE.Scene();
@@ -52,6 +53,8 @@ export class KnowledgeScene {
   private readonly dynamicEdges: SceneEdge[];
   private readonly artifact: KnowledgeSpaceArtifact;
   private readonly autoRotation = new AutoRotationController();
+  private readonly frameMetrics = new FrameMetrics();
+  private metricsPublished = false;
   private readonly reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   private mouseDragging = false;
   private handTransformActive = false;
@@ -344,6 +347,14 @@ export class KnowledgeScene {
 
   private readonly animate = (timestampMs: number): void => {
     this.animationFrame = requestAnimationFrame(this.animate);
+    this.frameMetrics.record(timestampMs);
+    if (!this.metricsPublished && this.frameMetrics.snapshot) {
+      this.metricsPublished = true;
+      this.container.dataset.performanceFrames = String(this.frameMetrics.snapshot.frames);
+      this.container.dataset.performanceDurationMs = this.frameMetrics.snapshot.durationMs.toFixed(2);
+      this.container.dataset.performanceFps = this.frameMetrics.snapshot.fps.toFixed(2);
+      this.container.dataset.performanceMaxFrameMs = this.frameMetrics.snapshot.maxFrameMs.toFixed(2);
+    }
     this.applyTransitions(timestampMs);
     const rotation = this.autoRotation.update(timestampMs, this.autoRotationConditions(timestampMs));
     this.contentGroup.rotation.y += rotation.angleDeltaRad;

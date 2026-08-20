@@ -1,7 +1,7 @@
 {
   "version": 2,
   "generated_at": "2026-08-21T00:00:00Z",
-  "pipeline": { "version": "mvp1.6.0" },
+  "pipeline": { "version": "mvp1.5.0" },
   "embedding": {
     "model": "BAAI/bge-m3",
     "dimension": 1024,

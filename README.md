@@ -1,12 +1,12 @@
 # Auaka System
 
-> **Version 1.0.0** · Git tag: `v1.0.0` · Local-first multimodal personal knowledge space
+> **Version 1.5.0** · Git tag: `v1.5.0` · Local-first multimodal personal knowledge space
 
 Auaka System 将真实 Obsidian Markdown 知识库映射为具有语义意义的 3D 知识空间，并通过本地 MediaPipe Hand Landmarker 实现 Pointer、Pinch、Open Palm 和双手空间交互。
 
-1.0.0 是第一个可运行的 MVP 版本：MVP-1 的空间知识界面和手势交互已经完成；MVP-2A 的 Chunk Retrieval 已作为独立的本地检索基础实现，但 Voice、RAG、LLM 和 Agent 仍未纳入本版本的完成范围。
+1.5.0 在首个可运行 MVP 上增加双视图知识展示：保留高维语义投影形成的 Semantic Space，并新增多层级 Topic Galaxy、Compact Globe 与自动旋转。MVP-2A Chunk Retrieval 仍作为独立的本地检索基础；Voice、RAG、LLM 和 Agent 不属于本版本范围。
 
-## 1.0.0 已完成功能
+## 1.5.0 已完成功能
 
 ### 知识空间 Pipeline
 
@@ -38,6 +38,16 @@ Three.js knowledge space
 - 实线表示 Wikilink，虚线表示 Semantic Link。
 - 鼠标 hover、点击选择、节点详情面板和 Summary / Wikilinks / Semantic Neighbors 三个标签页。
 - Semantic Neighbors 在详情面板中最多显示当前关注节点的 5 条关系。
+
+### Topic Galaxy 与 Compact Globe
+
+- Artifact v2 同时持久化 Semantic、Galaxy 和 Compact 三套坐标；浏览器只插值，不运行 UMAP、层级推断或力导向模拟。
+- 顶部控件在“语义空间”和“主题星系”两个独立视图间切换；节点身份、选择和详情保持不变。
+- Markdown Frontmatter 支持 `knowledge_role: hub` 与 `knowledge_parent: "[[父主题]]"`，可声明任意深度的显式主题层级。
+- 没有显式 Hub 的笔记被诚实归入 `virtual:unassigned`，不会伪装成模型确认的主题。
+- 层级边、Wikilink 和 Semantic Link 分别保留；主题星系按父子轨道形成三维球状结构。
+- 主题星系可在 900 ms 内可逆地收拢为知识球；标签与关系同步淡化，展开恢复精确 Galaxy 坐标。
+- 知识球静置 2 秒后以 `0.035 rad/s` 缓慢自转；鼠标、手势、选择、页面隐藏或 reduced motion 会立即暂停。
 
 ### 本地手势交互
 
@@ -74,11 +84,13 @@ POST /search
 
 ### 真实 Vault 验证结果
 
-- Vault：351 篇 Markdown notes。
+- Vault：353 篇 Markdown notes；36 个文件被规则排除，0 个读取错误。
 - 未解析 Wikilink：575 条。
+- Artifact v2：1,424 条关系，0 个显式 Hub，0 个显式 Parent，353 篇笔记归入 `unassigned`。
 - Embedding：`BAAI/bge-m3`，1024 维，CPU，本地缓存 revision `5617a9f61b028005a4858fdac845db406aefb181`。
 - `目标检测` 与 `object detection` 的模型 sanity check cosine similarity：`0.644856`。
-- Artifact source hash：`74ecb5820ea2c09b69e0fe9ae435f3f86ad0dc433cddd8821f6791da031d036c`。
+- Artifact source hash：`c46d764afdd2f7c137724ad262c06f03520875c6fcb0eab21eb7a9dd95e2cf78`。
+- 浏览器性能：353 节点稳态 10 秒平均 `116.89 FPS`；1,000 节点连续布局过渡平均 `75.75 FPS`，最长帧 `24.10 ms`。
 
 ## 系统边界
 
@@ -103,7 +115,7 @@ MVP-3：Hermes / Agent + Obsidian 写入 + 自动重新生成空间
 在仓库根目录执行：
 
 ```powershell
-python -m pip install -e ".\pipeline[embedding]"
+python -m pip install -e ".\pipeline[embedding,dev]"
 cd frontend
 npm install
 ```
@@ -299,9 +311,9 @@ parameter comparison
 
 ## 发布信息
 
-当前发布：`v1.0.0`。
+当前发布：`v1.5.0`。
 
-该标签对应第一个完整可运行的本地 MVP。后续手势校准和 MVP-2B/MVP-3 应通过新的版本标签发布，例如 `v1.1.0` 或 `v2.0.0`，不要覆盖 `v1.0.0`。
+`v1.0.0` 保留为第一个完整可运行的本地 MVP；`v1.5.0` 对应双视图 Topic Galaxy 与 Compact Globe。后续 Voice/RAG 和 Agent 闭环应使用新的版本标签，不覆盖既有发布。
 
 ## License
 

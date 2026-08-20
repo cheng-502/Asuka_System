@@ -7,7 +7,7 @@ This runbook starts the local-first MVP-1 demo: Obsidian Markdown → BAAI/bge-m
 From the repository root:
 
 ```powershell
-python -m pip install -e ".\pipeline[embedding]"
+python -m pip install -e ".\pipeline[embedding,dev]"
 cd frontend
 npm install
 cd ..
@@ -36,7 +36,7 @@ python -m auaka_pipeline.cli generate `
   --min-similarity 0.60
 ```
 
-Expected real-run summary: 351 notes, 575 unresolved Wikilinks, 1,426 total link records, 649 semantic records, UMAP `random_state=42`, `n_neighbors=15`, `min_dist=0.25`, and source hash `74ecb5820ea2c09b69e0fe9ae435f3f86ad0dc433cddd8821f6791da031d036c`.
+Current real-run summary: 353 notes, 575 unresolved Wikilinks, 1,424 total link records, UMAP `random_state=42`, `n_neighbors=15`, `min_dist=0.25`, and source hash `c46d764afdd2f7c137724ad262c06f03520875c6fcb0eab21eb7a9dd95e2cf78`. The current Vault declares 0 explicit Hubs and 0 explicit Parents, so all 353 notes truthfully use the unassigned fallback until hierarchy Frontmatter is added.
 
 To expose the private artifact to the local browser without replacing the checked-in fixture:
 

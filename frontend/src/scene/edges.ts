@@ -164,9 +164,8 @@ export function applyEdgeVisibility(
 
 export function setEdgeOpacityFactor(edges: readonly SceneEdge[], factor: number): void {
   const clamped = Math.min(Math.max(factor, 0), 1);
-  const batches = new Set(edges.map((edge) => edge.batch));
-  batches.forEach((batch) => {
-    batch.line.material.opacity = Number(batch.line.userData.baseOpacity ?? batch.line.material.opacity) * clamped;
+  edges.forEach((edge) => {
+    edge.line.material.opacity = Number(edge.line.userData.baseOpacity ?? edge.line.material.opacity) * clamped;
   });
 }
 
