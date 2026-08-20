@@ -285,3 +285,10 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Added a ten-task contract-first plan covering Artifact v2 compatibility, Frontmatter hierarchy, deterministic offline layouts, animated dual-view rendering, dynamic relationships, the right toolbar, compact rotation, and real-data release gates.
 - Work remains on `codex/interaction-calibration-v1.1`; main agent owns contracts, integration, Git, and final decisions while independent agents provide checkpoint reviews.
 - Independent plan review identified an unsafe v1 browser-layout assumption and oversized contract/rotation tasks. The plan now splits those tasks, disables Topic Galaxy for legacy v1, adds exact hierarchy/LOD/timing/performance criteria, and records the real Vault's current 0/0 hierarchy preflight.
+
+## 2026-08-21 — Knowledge Galaxy Task 1a complete
+
+- Added strict discriminated Artifact v1/v2 JSON Schema branches and a shared multi-level v2 fixture.
+- Added Python v2 typed boundaries and cross-record validation for ID namespaces, note counts, finite layouts, hub/assignment/parent/depth/topic-root invariants, parent cycles, and real-only knowledge links.
+- Existing generation remains v1 until Task 5; Task 1a changes only read/validation capability.
+- Verification: 26 focused model/artifact tests and 52 non-projection Pipeline tests passed. Projection metadata test passed; unchanged deterministic UMAP execution was isolated after the environment spent over seven minutes compiling without failure output.

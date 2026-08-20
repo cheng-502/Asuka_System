@@ -202,3 +202,4 @@ The final differentiator is a knowledge space that can eventually be changed by 
 - The ignored real Artifact must remain v1 until fixture/schema/pipeline compatibility is proven, then be regenerated privately to v2.
 - Read-only preflight of the configured real Vault found 0 `knowledge_role` files and 0 `knowledge_parent` files. Real-data acceptance must not claim nested explicit hubs until the user authors that metadata; deterministic multi-level fixtures provide structural acceptance meanwhile.
 - Review froze strict v1/v2 schema branches, separate wire/runtime types, one semantic coordinate source, a reserved virtual-ID namespace, derived hierarchy edges, and finite-coordinate cross-validation.
+- Artifact v2 cross-record validation now treats hierarchy assignment as a semantic contract: hubs are always explicit, virtual parents only own unassigned notes, and knowledge links can never address the `virtual:` namespace even when unresolved.

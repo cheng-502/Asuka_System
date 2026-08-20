@@ -102,6 +102,8 @@ Advance the released `v1.0.0` baseline through three controlled gates: stabilize
 | PowerShell dynamic `Select-String` pattern check used an invalid positional argument | 1 | Re-ran the plan audit with literal pattern arguments and continued the self-review |
 | GitHub publish blocked: no local origin, no accessible repositories, and `gh` CLI unavailable | 1 | Confirmed GitHub Connector identity; waiting for a repository target and/or local `gh` setup |
 | Knowledge-galaxy planning patch used a stale insertion heading | 1 | Verified the patch was rejected atomically, inspected file tails, and split new plan creation from log updates |
+| System/root Python environments lacked Pipeline test dependencies | 1 | Reused the existing dependency-complete MVP worktree virtual environment against the current source tree |
+| Full Pipeline discovery spent over seven minutes compiling UMAP with no failure output | 1 | Interrupted the test-only process, ran 52 non-projection tests plus the projection metadata test; deterministic UMAP code was unchanged and remains a later isolated verification |
 
 ## 2026-08-20 — Hierarchical Knowledge Galaxy Program
 

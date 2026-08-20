@@ -2,35 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://auaka.system/schemas/knowledge-space.schema.json",
   "title": "Auaka System Knowledge Space Artifact",
-  "description": "Versioned, browser-safe projection of an Obsidian knowledge space.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "version",
-    "generated_at",
-    "pipeline",
-    "embedding",
-    "umap",
-    "source",
-    "nodes",
-    "links"
+  "description": "Strict versioned browser-safe projections of an Obsidian knowledge space.",
+  "oneOf": [
+    { "$ref": "#/$defs/artifactV1" },
+    { "$ref": "#/$defs/artifactV2" }
   ],
-  "properties": {
-    "version": { "const": 1 },
-    "generated_at": { "type": "string", "format": "date-time" },
-    "pipeline": { "$ref": "#/$defs/pipeline" },
-    "embedding": { "$ref": "#/$defs/embedding" },
-    "umap": { "$ref": "#/$defs/umap" },
-    "source": { "$ref": "#/$defs/source" },
-    "nodes": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/node" }
-    },
-    "links": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/link" }
-    }
-  },
   "$defs": {
     "nonEmptyString": {
       "type": "string",
@@ -62,13 +38,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["n_components", "random_state", "metric"],
-        "properties": {
-          "n_components": { "const": 3 },
-          "random_state": { "type": "integer" },
-          "metric": { "const": "cosine" },
-          "n_neighbors": { "type": "integer", "minimum": 1 },
-          "min_dist": { "type": "number", "minimum": 0, "maximum": 1 }
-        }
+      "properties": {
+        "n_components": { "const": 3 },
+        "random_state": { "type": "integer" },
+        "metric": { "const": "cosine" },
+        "n_neighbors": { "type": "integer", "minimum": 1 },
+        "min_dist": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
     },
     "source": {
       "type": "object",
@@ -92,17 +68,58 @@
         "z": { "type": "number" }
       }
     },
-    "node": {
+    "layoutsV2": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "title",
-        "summary",
-        "domain",
-        "position",
-        "explicit_link_count"
-      ],
+      "required": ["semantic", "galaxy", "compact"],
+      "properties": {
+        "semantic": { "$ref": "#/$defs/position" },
+        "galaxy": { "$ref": "#/$defs/position" },
+        "compact": { "$ref": "#/$defs/position" }
+      }
+    },
+    "hierarchyV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "parent_id", "depth", "assignment", "topic_root_id"],
+      "properties": {
+        "role": { "enum": ["hub", "note"] },
+        "parent_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/nonEmptyString" },
+            { "type": "null" }
+          ]
+        },
+        "depth": { "type": "integer", "minimum": 0 },
+        "assignment": {
+          "enum": ["explicit", "wikilink", "folder", "semantic", "unassigned"]
+        },
+        "topic_root_id": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "layoutAlgorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "seed"],
+      "properties": {
+        "algorithm": { "$ref": "#/$defs/nonEmptyString" },
+        "seed": { "type": "integer" }
+      }
+    },
+    "layoutGenerationV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "galaxy", "compact"],
+      "properties": {
+        "version": { "$ref": "#/$defs/nonEmptyString" },
+        "galaxy": { "$ref": "#/$defs/layoutAlgorithm" },
+        "compact": { "$ref": "#/$defs/layoutAlgorithm" }
+      }
+    },
+    "nodeV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "summary", "domain", "position", "explicit_link_count"],
       "properties": {
         "id": { "$ref": "#/$defs/nonEmptyString" },
         "title": { "$ref": "#/$defs/nonEmptyString" },
@@ -110,6 +127,38 @@
         "domain": { "$ref": "#/$defs/nonEmptyString" },
         "position": { "$ref": "#/$defs/position" },
         "explicit_link_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "nodeV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "summary", "domain", "layouts", "hierarchy", "explicit_link_count"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!virtual:).+"
+        },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "summary": { "type": "string" },
+        "domain": { "$ref": "#/$defs/nonEmptyString" },
+        "layouts": { "$ref": "#/$defs/layoutsV2" },
+        "hierarchy": { "$ref": "#/$defs/hierarchyV2" },
+        "explicit_link_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "virtualNodeV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "layouts", "hierarchy"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^virtual:.+"
+        },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "layouts": { "$ref": "#/$defs/layoutsV2" },
+        "hierarchy": { "$ref": "#/$defs/hierarchyV2" }
       }
     },
     "link": {
@@ -126,11 +175,7 @@
           "uniqueItems": true,
           "items": { "enum": ["wikilink", "semantic"] }
         },
-        "similarity": {
-          "type": "number",
-          "minimum": -1,
-          "maximum": 1
-        },
+        "similarity": { "type": "number", "minimum": -1, "maximum": 1 },
         "is_unresolved": { "type": "boolean" },
         "unresolved_target": { "$ref": "#/$defs/nonEmptyString" }
       },
@@ -138,36 +183,51 @@
         {
           "if": {
             "properties": {
-              "types": {
-                "type": "array",
-                "contains": { "const": "semantic" }
-              }
+              "types": { "type": "array", "contains": { "const": "semantic" } }
             }
           },
-          "then": {
-            "required": ["similarity"],
-            "properties": {
-              "similarity": {
-                "type": "number",
-                "minimum": -1,
-                "maximum": 1
-              }
-            }
-          }
+          "then": { "required": ["similarity"] }
         },
         {
           "if": {
             "required": ["is_unresolved"],
             "properties": { "is_unresolved": { "const": true } }
           },
-          "then": {
-            "required": ["unresolved_target"],
-            "properties": {
-              "unresolved_target": { "$ref": "#/$defs/nonEmptyString" }
-            }
-          }
+          "then": { "required": ["unresolved_target"] }
         }
       ]
+    },
+    "artifactV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "generated_at", "pipeline", "embedding", "umap", "source", "nodes", "links"],
+      "properties": {
+        "version": { "const": 1 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "pipeline": { "$ref": "#/$defs/pipeline" },
+        "embedding": { "$ref": "#/$defs/embedding" },
+        "umap": { "$ref": "#/$defs/umap" },
+        "source": { "$ref": "#/$defs/source" },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/nodeV1" } },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } }
+      }
+    },
+    "artifactV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "generated_at", "pipeline", "embedding", "umap", "layout_generation", "source", "nodes", "virtual_nodes", "links"],
+      "properties": {
+        "version": { "const": 2 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "pipeline": { "$ref": "#/$defs/pipeline" },
+        "embedding": { "$ref": "#/$defs/embedding" },
+        "umap": { "$ref": "#/$defs/umap" },
+        "layout_generation": { "$ref": "#/$defs/layoutGenerationV2" },
+        "source": { "$ref": "#/$defs/source" },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/nodeV2" } },
+        "virtual_nodes": { "type": "array", "items": { "$ref": "#/$defs/virtualNodeV2" } },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } }
+      }
     }
   }
 }

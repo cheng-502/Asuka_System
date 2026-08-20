@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "v1-node-cannot-contain-v2-hierarchy",
+      "base_artifact": "v1",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": ["nodes", 0, "hierarchy"],
+          "value": {
+            "role": "hub",
+            "parent_id": null,
+            "depth": 0,
+            "assignment": "explicit",
+            "topic_root_id": "01/目标检测.md"
+          }
+        }
+      ]
+    },
+    {
+      "name": "v2-node-cannot-contain-v1-position",
+      "base_artifact": "v2",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": ["nodes", 0, "position"],
+          "value": { "x": 0, "y": 0, "z": 0 }
+        }
+      ]
+    },
+    {
+      "name": "v2-requires-all-layouts",
+      "base_artifact": "v2",
+      "mutations": [
+        {
+          "operation": "delete",
+          "path": ["nodes", 0, "layouts", "compact"]
+        }
+      ]
+    },
+    {
+      "name": "v2-hub-assignment-must-be-explicit",
+      "base_artifact": "v2",
+      "mutations": [
+        {
+          "operation": "set",
+          "path": ["nodes", 1, "hierarchy", "assignment"],
+          "value": "semantic"
+        }
+      ]
+    },
+    {
+      "name": "v2-link-cannot-address-virtual-namespace",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["links", 0, "target"], "value": "virtual:unassigned" }
+      ]
+    },
+    {
+      "name": "v2-unresolved-target-cannot-address-virtual-namespace",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["links", 0, "target"], "value": "missing-note" },
+        { "operation": "set", "path": ["links", 0, "is_unresolved"], "value": true },
+        { "operation": "set", "path": ["links", 0, "unresolved_target"], "value": "virtual:unassigned" }
+      ]
+    },
+    {
+      "name": "v2-parent-chain-cannot-cycle",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["nodes", 0, "hierarchy", "parent_id"], "value": "topics/detection.md" },
+        { "operation": "set", "path": ["nodes", 0, "hierarchy", "depth"], "value": 2 }
+      ]
+    },
+    {
+      "name": "v2-depth-must-follow-parent",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["nodes", 2, "hierarchy", "depth"], "value": 7 }
+      ]
+    },
+    {
+      "name": "v2-topic-root-must-match-parent-chain",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["nodes", 2, "hierarchy", "topic_root_id"], "value": "topics/detection.md" }
+      ]
+    },
+    {
+      "name": "source-note-count-must-match-real-nodes",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["source", "note_count"], "value": 99 }
+      ]
+    },
+    {
+      "name": "layout-coordinates-must-be-finite",
+      "base_artifact": "v2",
+      "mutations": [
+        { "operation": "set", "path": ["nodes", 0, "layouts", "galaxy", "x"], "value": 1e400 }
+      ]
+    }
+  ]
+}
