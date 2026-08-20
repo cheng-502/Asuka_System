@@ -5,7 +5,7 @@
 - [x] Task 2: Explicit hierarchy Frontmatter parsing
 - [x] Checkpoint A: Contract and authoring review
 - [x] Task 3: Deterministic multi-level hierarchy resolution
-- [ ] Task 4: Galaxy and compact coordinate generation
+- [x] Task 4: Galaxy and compact coordinate generation
 - [ ] Task 5: Artifact v2 generation integration
 - [ ] Checkpoint B: Offline Artifact review
 - [ ] Task 6: Frontend layout state and interruption-safe transitions

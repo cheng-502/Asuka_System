@@ -317,3 +317,12 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Automatic inference never creates Hub-to-Hub nesting; invalid parents and explicit cycles produce stable warnings and affected Hubs remain safe top-level roots.
 - Resolution is independent of input order, handles chains deeper than Python's recursion limit iteratively, and rejects case-insensitive Note ID collisions before building reference indexes.
 - Verification: 61 non-projection Pipeline tests and `git diff --check` passed. Independent specification and quality reviews approved after the canonical-ID collision guard was added.
+
+## 2026-08-21 — Knowledge Galaxy Task 4 complete
+
+- Added deterministic offline Galaxy and Compact coordinate generation with stable hash ordering, Fibonacci directions, recursive Hub orbits, and a capped 15% semantic sibling offset.
+- A single topic root is centered; multiple roots form separated global shells; compact mode places Hubs and notes on distinct inner/outer globe shells.
+- Deep hierarchies use bounded rational depth decay so 1,100 levels remain finite and individually addressable instead of collapsing onto identical coordinates.
+- The layout boundary validates parent roles, depths, topic roots, virtual-unassigned symmetry, cycles, reachability, complete output ID sets, and finite coordinates without mutating UMAP input arrays.
+- Layout-changing constants are owned by immutable algorithm version `galaxy-layout-v1`; only the deterministic seed remains configurable and is persisted in metadata.
+- Verification: 69 non-projection Pipeline tests and `git diff --check` passed. Independent reviews approved after adversarial hierarchy, numeric, metadata, and aliasing cases were fixed.
