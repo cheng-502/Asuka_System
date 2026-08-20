@@ -13,10 +13,12 @@ import type {
 export const DEFAULT_HAND_MODEL_PATH = "/models/hand_landmarker.task";
 export const DEFAULT_WASM_PATH = "/wasm";
 export const MAX_HANDS = 2;
+export const MIN_HANDEDNESS_CONFIDENCE = 0.6;
 
 export interface HandTrackerOptions {
   modelPath?: string;
   wasmPath?: string;
+  minConfidence?: number;
   onFrame: (frame: HandFrame) => void;
   onStatus?: (message: string) => void;
 }
@@ -44,12 +46,7 @@ export class HandTracker {
       this.options.onStatus?.("Loading local Hand Landmarker…");
       const vision = await FilesetResolver.forVisionTasks(this.options.wasmPath);
       this.landmarker = await HandLandmarker.createFromOptions(vision, {
-        baseOptions: { modelAssetPath: this.options.modelPath },
-        runningMode: "VIDEO",
-        numHands: MAX_HANDS,
-        minHandDetectionConfidence: 0.6,
-        minHandPresenceConfidence: 0.6,
-        minTrackingConfidence: 0.6,
+        ...handLandmarkerOptions(this.options.modelPath, this.options.minConfidence ?? 0.6),
       });
       this.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
@@ -110,14 +107,28 @@ export function handFrameFromResult(
     const normalized = landmarks.map(({ x, y, z }) => ({ x, y, z }));
     if (normalized.length !== 21 || !normalized.every(isValidLandmark)) return [];
     const category = result.handedness?.[index]?.[0] ?? result.handednesses?.[index]?.[0];
+    const handednessConfidence = Number.isFinite(category?.score) ? clamp01(category.score) : 0;
     return [{
       landmarks: normalized,
-      handedness: normalizeHandedness(category?.categoryName),
-      confidence: Number.isFinite(category?.score) ? clamp01(category.score) : 0,
+      handedness: handednessConfidence >= MIN_HANDEDNESS_CONFIDENCE
+        ? normalizeHandedness(category?.categoryName)
+        : "Unknown",
+      handednessConfidence,
     }];
   });
 
   return { timestampMs, frameWidth, frameHeight, hands };
+}
+
+export function handLandmarkerOptions(modelPath: string, minConfidence: number) {
+  return {
+    baseOptions: { modelAssetPath: modelPath },
+    runningMode: "VIDEO" as const,
+    numHands: MAX_HANDS,
+    minHandDetectionConfidence: minConfidence,
+    minHandPresenceConfidence: minConfidence,
+    minTrackingConfidence: minConfidence,
+  };
 }
 
 function normalizeHandedness(value: string | undefined): Handedness {

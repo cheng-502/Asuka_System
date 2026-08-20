@@ -268,3 +268,13 @@ The requested MVP-1 implementation is complete in the isolated worktree and GitH
 - Empty-space pinch now preserves the current selection instead of clearing it.
 - Independent specification and code-quality reviews passed after state-machine safety fixes.
 - Verification: 87 frontend tests passed. TypeScript, production build, browser smoke, and `git diff --check` passed; the existing Three.js bundle-size warning remains nonblocking.
+
+## 2026-08-20 — MVP-1.5 Task 5 complete
+
+- Replaced orientation-sensitive Open Palm frame counting with an elapsed-time state machine and preserved its active/cooldown lifecycle across higher-priority interaction candidates.
+- Replaced per-frame two-hand deltas with a 200 ms armed, baseline-relative transform lifecycle covering deadzones, FPS-independent rate limits, angle wrap, dropout, ambiguous crossing, and re-baselining.
+- Hand transform ownership now flushes OrbitControls inertia before temporarily disabling mouse camera input, then returns ownership exactly once on end or malformed timing input.
+- MediaPipe detection, presence, and tracking thresholds remain calibrated at the model boundary; handedness classification confidence is kept separate and uncertain Left/Right labels degrade to `Unknown` without discarding valid landmarks.
+- The private 351-node artifact was hash-verified and copied to the ignored frontend data path for local preview only; it remains outside Git.
+- User camera acceptance found the interaction functional aside from sensitivity tuning. Trace replay, metrics, and formal calibration are intentionally deferred while development moves to richer node knowledge display.
+- Final verification: 19 frontend test files and 122 tests passed, TypeScript passed, an isolated production build passed, and `git diff --check` passed. Independent specification review approved; independent quality review approved after confidence-semantics correction.

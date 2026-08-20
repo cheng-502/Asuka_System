@@ -83,6 +83,15 @@ export function gestureConfigFromCalibration(
   | "pinchActivationMs"
   | "pinchCooldownMs"
   | "pinchPalmEpsilon"
+  | "trackingDropoutGraceMs"
+  | "openPalmActivationMs"
+  | "openPalmCooldownMs"
+  | "twoHandActivationMs"
+  | "twoHandZoomDeadzoneRatio"
+  | "twoHandRotationDeadzoneDegrees"
+  | "twoHandMaxZoomRatePerSecond"
+  | "twoHandMaxRotationRateDegreesPerSecond"
+  | "twoHandDropoutGraceMs"
 > {
   return {
     autoExitTimeoutMs: profile.tracking.auto_exit_ms,
@@ -95,6 +104,16 @@ export function gestureConfigFromCalibration(
     pinchActivationMs: profile.pinch.activation_ms,
     pinchCooldownMs: profile.pinch.cooldown_ms,
     pinchPalmEpsilon: profile.pinch.palm_epsilon,
+    trackingDropoutGraceMs: profile.tracking.dropout_grace_ms,
+    openPalmActivationMs: profile.open_palm.activation_ms,
+    openPalmCooldownMs: profile.open_palm.cooldown_ms,
+    twoHandActivationMs: profile.two_hand.activation_ms,
+    twoHandZoomDeadzoneRatio: profile.two_hand.zoom_deadzone_ratio,
+    twoHandRotationDeadzoneDegrees: profile.two_hand.rotation_deadzone_degrees,
+    twoHandMaxZoomRatePerSecond: profile.two_hand.max_zoom_rate_per_second,
+    twoHandMaxRotationRateDegreesPerSecond:
+      profile.two_hand.max_rotation_rate_degrees_per_second,
+    twoHandDropoutGraceMs: profile.two_hand.dropout_grace_ms,
   };
 }
 

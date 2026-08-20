@@ -1,143 +1,199 @@
 import { describe, expect, it } from "vitest";
 import { GestureEngine, type HandLandmark } from "../src/hand/GestureEngine";
+import type { HandFrame, Handedness, TrackedHand } from "../src/hand/HandFrame";
 
 function landmarks(overrides: Partial<Record<number, Partial<HandLandmark>>> = {}): HandLandmark[] {
-  return Array.from({ length: 21 }, (_, index) => ({ x: 0.2 + index * 0.005, y: 0.7, ...overrides[index] }));
+  return Array.from({ length: 21 }, (_, index) => ({
+    x: 0.2 + index * 0.005, y: 0.7, z: 0, ...overrides[index],
+  }));
 }
 
-function openPalm(indexX: number, indexY = 0.2): HandLandmark[] {
-  return landmarks({
-    8: { x: indexX, y: indexY }, 6: { x: indexX, y: indexY + 0.3 },
-    12: { x: indexX, y: indexY }, 10: { x: indexX, y: indexY + 0.3 },
-    16: { x: indexX, y: indexY }, 14: { x: indexX, y: indexY + 0.3 },
-    20: { x: indexX, y: indexY }, 18: { x: indexX, y: indexY + 0.3 },
-    4: { x: indexX + 0.1, y: 0.8 },
-  });
+function openPalm(centerX: number): HandLandmark[] {
+  const hand = Array.from({ length: 21 }, () => ({ x: centerX, y: 0.8, z: 0 }));
+  hand[0] = { x: centerX, y: 0.8, z: 0 };
+  hand[4] = { x: centerX + 0.28, y: 0.72, z: 0 };
+  const fingers = [
+    [5, 6, 7, 8, centerX - 0.12],
+    [9, 10, 11, 12, centerX - 0.04],
+    [13, 14, 15, 16, centerX + 0.04],
+    [17, 18, 19, 20, centerX + 0.12],
+  ] as const;
+  for (const [mcp, pip, dip, tip, x] of fingers) {
+    hand[mcp] = { x, y: 0.62, z: 0 };
+    hand[pip] = { x, y: 0.48, z: 0 };
+    hand[dip] = { x, y: 0.34, z: 0 };
+    hand[tip] = { x, y: 0.2, z: 0 };
+  }
+  return hand;
 }
 
 function pinchHand(palmScale: number, pinchRatio: number): HandLandmark[] {
   return landmarks({
-    0: { x: 0.5, y: 0.7 },
-    9: { x: 0.5, y: 0.7 - palmScale },
-    4: { x: 0.5, y: 0.3 },
-    8: { x: 0.5 + palmScale * pinchRatio, y: 0.3 },
+    0: { x: 0.5, y: 0.7 }, 9: { x: 0.5, y: 0.7 - palmScale },
+    4: { x: 0.5, y: 0.3 }, 8: { x: 0.5 + palmScale * pinchRatio, y: 0.3 },
   });
 }
 
+function tracked(points: HandLandmark[], handedness: Handedness = "Unknown"): TrackedHand {
+  return { landmarks: points, handedness, handednessConfidence: 0.9 };
+}
+
+function frame(timestampMs: number, hands: TrackedHand[]): HandFrame {
+  return { timestampMs, frameWidth: 640, frameHeight: 480, hands };
+}
+
+function translate(hand: HandLandmark[], deltaX: number, deltaY: number): HandLandmark[] {
+  return hand.map((point) => ({ ...point, x: point.x + deltaX, y: point.y + deltaY }));
+}
+
 describe("GestureEngine", () => {
-  it("emits a timestamp-filtered screen-space Pointer", () => {
+  it("keeps the legacy update entry point for single-hand pointer callers", () => {
     const engine = new GestureEngine({ pointerDeadzonePx: 0 });
-    expect(engine.update(landmarks({ 8: { x: 0.2, y: 0.2 }, 4: { x: 0.8, y: 0.8 } }), 0)).toEqual([
+    expect(engine.update(landmarks({ 8: { x: 0.2, y: 0.2 } }), 0)).toEqual([
       { type: "pointer", x: 0.2, y: 0.2 },
     ]);
-    const moved = engine.update(
-      landmarks({ 8: { x: 0.8, y: 0.8 }, 4: { x: 0.1, y: 0.1 } }),
-      16,
-      { width: 1920, height: 1080 },
-    )[0] as { type: "pointer"; x: number; y: number };
-    expect(moved.x).toBeGreaterThan(0.2);
-    expect(moved.x).toBeLessThan(0.8);
-    expect(moved.y).toBeGreaterThan(0.2);
-    expect(moved.y).toBeLessThan(0.8);
   });
 
-  it("resets pointer filtering after the configured no-hand transition", () => {
-    const engine = new GestureEngine({ pointerDeadzonePx: 0, noHandTimeoutFrames: 1 });
-    engine.update(landmarks({ 8: { x: 0.2, y: 0.2 } }), 0);
-    engine.update(landmarks({ 8: { x: 0.8, y: 0.8 } }), 16);
-    expect(engine.update(null, 32)).toEqual([{ type: "no_hand" }]);
-    expect(engine.update(landmarks({ 8: { x: 0.7, y: 0.7 } }), 48)).toContainEqual({
-      type: "pointer", x: 0.7, y: 0.7,
-    });
+  it("uses HandFrame as the canonical entry point and keeps handedness stable", () => {
+    const engine = new GestureEngine({ twoHandActivationMs: 200 });
+    const left = tracked(openPalm(0.3), "Left");
+    const right = tracked(openPalm(0.7), "Right");
+    expect(engine.updateFrame(frame(0, [right, left]))).toEqual([]);
+    expect(engine.updateFrame(frame(200, [left, right]))).toEqual([
+      { type: "two_hand_start", timestampMs: 200 },
+    ]);
+    expect(engine.updateFrame(frame(216, [right, left]))).toEqual([]);
   });
 
-  it("fires one palm-normalized, time-based Pinch and retriggers after release/cooldown", () => {
-    const engine = new GestureEngine({
-      pinchActivationMs: 120,
-      pinchCooldownMs: 150,
-      pinchEnterRatio: 0.32,
-      pinchReleaseRatio: 0.48,
-    });
-    expect(engine.update(pinchHand(0.1, 0.25), 0).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(pinchHand(0.25, 0.25), 120).map((event) => event.type)).toEqual([
-      "pointer", "pinch_state", "pinch",
+  it("does not confuse handedness confidence with tracking confidence", () => {
+    const engine = new GestureEngine({ openPalmActivationMs: 0 });
+    const uncertainHandedness = {
+      ...tracked(openPalm(0.5), "Unknown"),
+      handednessConfidence: 0.1,
+    };
+    expect(engine.updateFrame(frame(0, [uncertainHandedness])).map((event) => event.type))
+      .toEqual(["open_palm"]);
+  });
+
+  it("treats non-finite landmark coordinates as tracking dropout", () => {
+    const engine = new GestureEngine({ trackingDropoutGraceMs: 150 });
+    const invalid = tracked(landmarks({ 8: { x: Number.NaN } }), "Right");
+    expect(engine.updateFrame(frame(0, [invalid]))).toEqual([]);
+    expect(engine.updateFrame(frame(150, [invalid])).map((event) => event.type)).toEqual(["no_hand"]);
+  });
+
+  it("treats invalid canonical frame dimensions as tracking dropout", () => {
+    const engine = new GestureEngine({ trackingDropoutGraceMs: 150 });
+    const invalidFrame = { ...frame(0, [tracked(landmarks(), "Right")]), frameWidth: 0 };
+    expect(engine.updateFrame(invalidFrame)).toEqual([]);
+    expect(engine.updateFrame({ ...invalidFrame, timestampMs: 150 }).map((event) => event.type))
+      .toEqual(["no_hand"]);
+  });
+
+  it("enforces Pinch over Open Palm over Pointer priority", () => {
+    const pinchEngine = new GestureEngine({ pinchActivationMs: 0 });
+    expect(pinchEngine.update(pinchHand(0.15, 0.2), 0).map((event) => event.type)).toEqual([
+      "pinch_state", "pinch",
     ]);
-    expect(engine.update(pinchHand(0.15, 0.40), 140).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(pinchHand(0.15, 0.50), 160).map((event) => event.type)).toEqual([
-      "pointer", "pinch_state",
-    ]);
-    expect(engine.update(pinchHand(0.15, 0.25), 300).map((event) => event.type)).toEqual(["pointer"]);
-    engine.update(pinchHand(0.15, 0.25), 310);
-    expect(engine.update(pinchHand(0.15, 0.25), 430).map((event) => event.type)).toEqual([
-      "pointer", "pinch_state", "pinch",
+    const palmEngine = new GestureEngine({ openPalmActivationMs: 0 });
+    expect(palmEngine.update(openPalm(0.5), 0).map((event) => event.type)).toEqual(["open_palm"]);
+    const pointerEngine = new GestureEngine();
+    expect(pointerEngine.update(landmarks({ 8: { x: 0.4, y: 0.3 } }), 0)).toEqual([
+      { type: "pointer", x: 0.4, y: 0.3 },
     ]);
   });
 
-  it("cancels active pinch state immediately when landmarks drop out", () => {
+  it("fires Open Palm once by elapsed time while the palm stays open", () => {
+    const engine = new GestureEngine({ openPalmActivationMs: 250, openPalmCooldownMs: 500 });
+    expect(engine.update(openPalm(0.5), 0)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 249)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 250)).toEqual([{ type: "open_palm" }]);
+    expect(engine.update(openPalm(0.5), 1_000)).toEqual([]);
+  });
+
+  it("restarts an Open Palm candidate after a higher-priority two-hand mode", () => {
+    const engine = new GestureEngine({ openPalmActivationMs: 250 });
+    expect(engine.update(openPalm(0.5), 0)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 200)).toEqual([]);
+    expect(engine.update([landmarks(), landmarks()], 210)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 250)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 499)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 500)).toEqual([{ type: "open_palm" }]);
+  });
+
+  it("does not re-trigger an active Open Palm after a higher-priority interruption", () => {
+    const engine = new GestureEngine({ openPalmActivationMs: 250 });
+    engine.update(openPalm(0.5), 0);
+    expect(engine.update(openPalm(0.5), 250)).toEqual([{ type: "open_palm" }]);
+    expect(engine.update([landmarks(), landmarks()], 300)).toEqual([]);
+    expect(engine.update(openPalm(0.5), 1_000)).toEqual([]);
+  });
+
+  it("ends active two-hand ownership when a canonical frame timestamp is non-finite", () => {
+    const engine = new GestureEngine({ twoHandActivationMs: 0 });
+    const hands = [tracked(openPalm(0.3), "Left"), tracked(openPalm(0.7), "Right")];
+    engine.updateFrame(frame(0, hands));
+    expect(engine.updateFrame(frame(0, hands)).map((event) => event.type)).toEqual(["two_hand_start"]);
+    expect(engine.updateFrame(frame(Number.NaN, hands))).toEqual([
+      { type: "two_hand_end", timestampMs: 0, reason: "ambiguous" },
+    ]);
+    expect(engine.update(landmarks({ 8: { x: 0.4, y: 0.3 } }), 10).map((event) => event.type))
+      .toEqual(["pointer"]);
+  });
+
+  it("does not leak single-hand events from two non-open hands", () => {
     const engine = new GestureEngine({ pinchActivationMs: 0 });
-    expect(engine.update(pinchHand(0.15, 0.2), 0).map((event) => event.type)).toEqual([
-      "pointer", "pinch_state", "pinch",
-    ]);
-    expect(engine.update(null, 16).map((event) => event.type)).toEqual(["pinch_state"]);
+    expect(engine.update([pinchHand(0.15, 0.2), landmarks({ 8: { x: 0.8, y: 0.3 } })], 0))
+      .toEqual([]);
+
+    engine.reset();
+    expect(engine.update(pinchHand(0.15, 0.2), 10).map((event) => event.type))
+      .toEqual(["pinch_state", "pinch"]);
+    expect(engine.update([pinchHand(0.15, 0.2), landmarks()], 20)).toEqual([]);
   });
 
-  it("fires Open Palm once after stable frames", () => {
-    const engine = new GestureEngine({ openPalmStableFrames: 2 });
-    const palm = landmarks({
-      8: { y: 0.2 }, 6: { y: 0.5 }, 12: { y: 0.2 }, 10: { y: 0.5 },
-      16: { y: 0.2 }, 14: { y: 0.5 }, 20: { y: 0.2 }, 18: { y: 0.5 },
-      4: { x: 0.9, y: 0.9 },
+  it("emits combined two-hand lifecycle and baseline-relative transform events", () => {
+    const engine = new GestureEngine({
+      twoHandActivationMs: 200,
+      twoHandZoomDeadzoneRatio: 0,
+      twoHandRotationDeadzoneDegrees: 0,
+      twoHandMaxZoomRatePerSecond: 100,
+      twoHandMaxRotationRateDegreesPerSecond: 10_000,
     });
-    expect(engine.update(palm).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(palm).map((event) => event.type)).toEqual(["pointer", "open_palm"]);
-    expect(engine.update(palm).map((event) => event.type)).toEqual(["pointer"]);
+    const left = tracked(openPalm(0.3), "Left");
+    const right = tracked(openPalm(0.7), "Right");
+    engine.updateFrame(frame(0, [left, right]));
+    expect(engine.updateFrame(frame(200, [left, right]))).toEqual([
+      { type: "two_hand_start", timestampMs: 200 },
+    ]);
+    const movedLeft = tracked(translate(openPalm(0.3), -0.1, 0), "Left");
+    const movedRight = tracked(translate(openPalm(0.7), 0.1, 0.1), "Right");
+    const [transform] = engine.updateFrame(frame(300, [movedLeft, movedRight]));
+    expect(transform).toMatchObject({ type: "two_hand_transform", timestampMs: 300 });
+    if (transform.type !== "two_hand_transform") return;
+    expect(transform.zoomLogDelta).toBeGreaterThan(0);
+    expect(transform.rotationDeltaRad).toBeGreaterThan(0);
   });
 
-  it("emits No Hand once after the configured timeout", () => {
-    const engine = new GestureEngine({ noHandTimeoutFrames: 2 });
-    expect(engine.update(null)).toEqual([]);
-    expect(engine.update(null)).toEqual([{ type: "no_hand" }]);
-    expect(engine.update(null)).toEqual([]);
+  it("suppresses single-hand events during an active two-hand dropout grace", () => {
+    const engine = new GestureEngine({ twoHandActivationMs: 0, twoHandDropoutGraceMs: 150 });
+    const left = tracked(openPalm(0.3), "Left");
+    const right = tracked(openPalm(0.7), "Right");
+    expect(engine.updateFrame(frame(0, [left, right]))).toEqual([]);
+    expect(engine.updateFrame(frame(0, [left, right])).map((event) => event.type))
+      .toEqual(["two_hand_start"]);
+    expect(engine.updateFrame(frame(100, [left]))).toEqual([]);
+    expect(engine.updateFrame(frame(251, [left]))).toEqual([
+      { type: "two_hand_end", timestampMs: 251, reason: "dropout" },
+    ]);
   });
 
-  it("emits Auto Exit once after a long no-hand interval and resets when a hand returns", () => {
-    const engine = new GestureEngine({ noHandTimeoutFrames: 2, autoExitTimeoutMs: 15_000 });
+  it("emits no_hand once after tracking dropout grace and auto-exits later", () => {
+    const engine = new GestureEngine({ trackingDropoutGraceMs: 150, autoExitTimeoutMs: 15_000 });
     expect(engine.update(null, 0)).toEqual([]);
-    expect(engine.update(null, 100)).toEqual([{ type: "no_hand" }]);
-    expect(engine.update(null, 14_999)).toEqual([]);
+    expect(engine.update(null, 149)).toEqual([]);
+    expect(engine.update(null, 150)).toEqual([{ type: "no_hand" }]);
     expect(engine.update(null, 15_000)).toEqual([{ type: "auto_exit" }]);
     expect(engine.update(null, 20_000)).toEqual([]);
-    expect(engine.update(landmarks(), 20_001).map((event) => event.type)).toEqual(["pointer"]);
-    expect(engine.update(null, 20_002)).toEqual([]);
-    expect(engine.update(null, 20_102)).toEqual([{ type: "no_hand" }]);
-  });
-
-  it("emits incremental zoom deltas when two open palms move apart or together", () => {
-    const engine = new GestureEngine({ twoHandChangeThreshold: 0.01 });
-    expect(engine.update([openPalm(0.25), openPalm(0.75)]).map((event) => event.type)).toEqual([]);
-
-    const apart = engine.update([openPalm(0.15), openPalm(0.85)]);
-    expect(apart[0].type).toBe("zoom");
-    expect((apart[0] as { type: "zoom"; delta: number }).delta).toBeGreaterThan(0);
-
-    const together = engine.update([openPalm(0.3), openPalm(0.7)]);
-    expect(together[0].type).toBe("zoom");
-    expect((together[0] as { type: "zoom"; delta: number }).delta).toBeLessThan(0);
-  });
-
-  it("emits an incremental rotate delta from the two-index-finger angle", () => {
-    const engine = new GestureEngine({ twoHandRotationThreshold: 0.02, twoHandChangeThreshold: 0.2 });
-    engine.update([openPalm(0.25, 0.5), openPalm(0.75, 0.5)]);
-
-    const events = engine.update([openPalm(0.25, 0.5), openPalm(0.75, 0.7)]);
-    expect(events[0].type).toBe("rotate");
-    expect((events[0] as { type: "rotate"; delta: number }).delta).toBeGreaterThan(0);
-  });
-
-  it("keeps two-hand tracking stable when MediaPipe changes hand result order", () => {
-    const engine = new GestureEngine({ twoHandChangeThreshold: 0.2, twoHandRotationThreshold: 0.02 });
-    engine.update([openPalm(0.25), openPalm(0.75)]);
-
-    expect(engine.update([openPalm(0.75), openPalm(0.25)])).toEqual([]);
   });
 });

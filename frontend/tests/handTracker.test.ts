@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { HandTracker, DEFAULT_HAND_MODEL_PATH, DEFAULT_WASM_PATH, MAX_HANDS, handFrameFromResult } from "../src/hand/HandTracker";
+import { HandTracker, DEFAULT_HAND_MODEL_PATH, DEFAULT_WASM_PATH, MAX_HANDS, handFrameFromResult, handLandmarkerOptions } from "../src/hand/HandTracker";
 
 describe("local Hand Landmarker adapter", () => {
   it("uses versioned local model and WASM paths", () => {
@@ -8,7 +8,7 @@ describe("local Hand Landmarker adapter", () => {
     expect(MAX_HANDS).toBe(2);
   });
 
-  it("creates a canonical frame with dimensions, handedness, confidence, and landmarks", () => {
+  it("creates a canonical frame with dimensions, handedness metadata, and landmarks", () => {
     const landmarks = Array.from({ length: 21 }, (_, index) => ({
       x: index / 20,
       y: 0.5,
@@ -27,8 +27,16 @@ describe("local Hand Landmarker adapter", () => {
       hands: [{
         landmarks,
         handedness: "Right",
-        confidence: 0.92,
+        handednessConfidence: 0.92,
       }],
+    });
+  });
+
+  it("uses the calibrated confidence for detection, presence, and tracking", () => {
+    expect(handLandmarkerOptions("/models/hand_landmarker.task", 0.72)).toMatchObject({
+      minHandDetectionConfidence: 0.72,
+      minHandPresenceConfidence: 0.72,
+      minTrackingConfidence: 0.72,
     });
   });
 
@@ -40,7 +48,21 @@ describe("local Hand Landmarker adapter", () => {
       handednesses: [[{ categoryName: "Right", score: 0.9 }]],
     } as never, 10, 320, 240);
 
-    expect(frame.hands[0]).toMatchObject({ handedness: "Left", confidence: 0.8 });
+    expect(frame.hands[0]).toMatchObject({ handedness: "Left", handednessConfidence: 0.8 });
+  });
+
+  it("keeps valid landmarks but degrades uncertain handedness to Unknown", () => {
+    const landmarks = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
+    const frame = handFrameFromResult({
+      landmarks: [landmarks],
+      handednesses: [[{ categoryName: "Right", score: 0.59 }]],
+    } as never, 10, 320, 240);
+
+    expect(frame?.hands).toEqual([{
+      landmarks,
+      handedness: "Unknown",
+      handednessConfidence: 0.59,
+    }]);
   });
 
   it.each([
@@ -73,7 +95,7 @@ describe("local Hand Landmarker adapter", () => {
       ],
     } as never, 10, 320, 240);
 
-    expect(frame?.hands).toEqual([{ landmarks: complete, handedness: "Right", confidence: 0.75 }]);
+    expect(frame?.hands).toEqual([{ landmarks: complete, handedness: "Right", handednessConfidence: 0.75 }]);
   });
 
   it("stops camera tracks, detaches the video, and closes the landmarker", () => {

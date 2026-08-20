@@ -1,9 +1,20 @@
-import type { NormalizedLandmark } from "./HandFrame";
-import { PointerFilter, type PointerViewport } from "./PointerFilter";
+import type {
+  HandFrame,
+  NormalizedLandmark,
+  TrackedHand,
+} from "./HandFrame";
+import {
+  isOpenPalm,
+  OpenPalmStateMachine,
+} from "./OpenPalmStateMachine";
 import { PinchStateMachine } from "./PinchStateMachine";
+import { PointerFilter, type PointerViewport } from "./PointerFilter";
+import {
+  TwoHandTransformStateMachine,
+  type TwoHandTransformEvent,
+} from "./TwoHandTransformStateMachine";
 
 export type HandLandmark = NormalizedLandmark;
-
 export type HandLandmarks = readonly HandLandmark[];
 export type GestureInput = HandLandmarks | readonly HandLandmarks[] | null;
 
@@ -14,8 +25,7 @@ export type GestureEvent =
   | { type: "open_palm" }
   | { type: "no_hand" }
   | { type: "auto_exit" }
-  | { type: "zoom"; delta: number }
-  | { type: "rotate"; delta: number };
+  | TwoHandTransformEvent;
 
 export interface GestureConfig {
   pointerMinCutoff: number;
@@ -27,11 +37,16 @@ export interface GestureConfig {
   pinchActivationMs: number;
   pinchCooldownMs: number;
   pinchPalmEpsilon: number;
-  openPalmStableFrames: number;
-  noHandTimeoutFrames: number;
+  trackingDropoutGraceMs: number;
   autoExitTimeoutMs: number;
-  twoHandChangeThreshold: number;
-  twoHandRotationThreshold: number;
+  openPalmActivationMs: number;
+  openPalmCooldownMs: number;
+  twoHandActivationMs: number;
+  twoHandZoomDeadzoneRatio: number;
+  twoHandRotationDeadzoneDegrees: number;
+  twoHandMaxZoomRatePerSecond: number;
+  twoHandMaxRotationRateDegreesPerSecond: number;
+  twoHandDropoutGraceMs: number;
 }
 
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
@@ -44,25 +59,31 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   pinchActivationMs: 120,
   pinchCooldownMs: 150,
   pinchPalmEpsilon: 0.01,
-  openPalmStableFrames: 3,
-  noHandTimeoutFrames: 8,
+  trackingDropoutGraceMs: 150,
   autoExitTimeoutMs: 15_000,
-  twoHandChangeThreshold: 0.01,
-  twoHandRotationThreshold: 0.04,
+  openPalmActivationMs: 250,
+  openPalmCooldownMs: 500,
+  twoHandActivationMs: 200,
+  twoHandZoomDeadzoneRatio: 0.03,
+  twoHandRotationDeadzoneDegrees: 3,
+  twoHandMaxZoomRatePerSecond: 1,
+  twoHandMaxRotationRateDegreesPerSecond: 120,
+  twoHandDropoutGraceMs: 150,
 };
+
+const OPEN_PALM_JOINT_COSINE_THRESHOLD = 0.5;
+const OPEN_PALM_TIP_EXTENSION_RATIO = 0.1;
 
 export class GestureEngine {
   private readonly config: GestureConfig;
   private readonly pointerFilter: PointerFilter;
   private readonly pinchStateMachine: PinchStateMachine;
-  private openPalmFrames = 0;
-  private openPalmActive = false;
-  private noHandFrames = 0;
-  private noHandActive = false;
+  private readonly openPalmStateMachine: OpenPalmStateMachine;
+  private twoHandStateMachine: TwoHandTransformStateMachine;
+  private twoHandOwnsInput = false;
   private noHandSince: number | null = null;
+  private noHandActive = false;
   private autoExitActive = false;
-  private previousTwoHandDistance: number | null = null;
-  private previousTwoHandAngle: number | null = null;
 
   constructor(config: Partial<GestureConfig> = {}) {
     this.config = { ...DEFAULT_GESTURE_CONFIG, ...config };
@@ -79,137 +100,193 @@ export class GestureEngine {
       cooldownMs: this.config.pinchCooldownMs,
       palmEpsilon: this.config.pinchPalmEpsilon,
     });
+    this.openPalmStateMachine = new OpenPalmStateMachine({
+      activationMs: this.config.openPalmActivationMs,
+      cooldownMs: this.config.openPalmCooldownMs,
+      dropoutGraceMs: this.config.trackingDropoutGraceMs,
+      jointCosineThreshold: OPEN_PALM_JOINT_COSINE_THRESHOLD,
+      tipExtensionRatio: OPEN_PALM_TIP_EXTENSION_RATIO,
+      palmEpsilon: this.config.pinchPalmEpsilon,
+    });
+    this.twoHandStateMachine = this.createTwoHandStateMachine();
   }
 
+  /** Compatibility adapter for tests and callers that already provide interaction-space landmarks. */
   update(
     input: GestureInput,
-    timestamp = performance.now(),
+    timestampMs = performance.now(),
     viewport: PointerViewport = { width: 1920, height: 1080 },
   ): GestureEvent[] {
-    const hands = normalizeHands(input);
-    if (!hands.length) return this.handleNoHand(timestamp);
-    this.noHandFrames = 0;
-    this.noHandActive = false;
-    this.noHandSince = null;
-    this.autoExitActive = false;
-    if (hands.length >= 2) {
-      const cancellation = this.pinchStateMachine.update(timestamp, null);
-      const cancellationEvents: GestureEvent[] = cancellation.released
-        ? [{ type: "pinch_state", active: false }]
-        : [];
-      if (isOpenPalm(hands[0]) && isOpenPalm(hands[1])) {
-        const orderedHands = [...hands].sort((left, right) => left[8].x - right[8].x);
-        return [...cancellationEvents, ...this.handleTwoHands(orderedHands[0], orderedHands[1])];
-      }
-      this.resetTwoHandBaseline();
-      return cancellationEvents;
-    }
-    this.resetTwoHandBaseline();
-    return this.handleSingleHand(hands[0], timestamp, viewport);
+    const hands = normalizeHands(input).map((landmarks): TrackedHand => ({
+      landmarks: [...landmarks],
+      handedness: "Unknown",
+      handednessConfidence: 1,
+    }));
+    return this.updateFrame({
+      timestampMs,
+      frameWidth: viewport.width,
+      frameHeight: viewport.height,
+      hands,
+    }, viewport);
   }
 
-  private handleSingleHand(
-    landmarks: HandLandmarks,
-    timestamp: number,
-    viewport: PointerViewport,
+  updateFrame(
+    frame: HandFrame,
+    viewport: PointerViewport = { width: 1920, height: 1080 },
   ): GestureEvent[] {
-    const pointer = this.pointerFilter.update(
-      timestamp,
-      { x: clamp01(landmarks[8].x), y: clamp01(landmarks[8].y) },
-      viewport,
-    );
-    const events: GestureEvent[] = [{ type: "pointer", ...pointer }];
-    const pinch = this.pinchStateMachine.update(timestamp, landmarks);
-    const openPalm = !pinch.active && isOpenPalm(landmarks);
-    if (pinch.activated) events.push({ type: "pinch_state", active: true }, { type: "pinch", ...pointer });
-    if (pinch.released) events.push({ type: "pinch_state", active: false });
-
-    if (openPalm) {
-      this.openPalmFrames += 1;
-      if (!this.openPalmActive && this.openPalmFrames >= this.config.openPalmStableFrames) {
-        this.openPalmActive = true;
-        events.push({ type: "open_palm" });
-      }
-    } else {
-      this.openPalmFrames = 0;
-      this.openPalmActive = false;
+    if (!isValidFrameMetadata(frame)) {
+      if (Number.isFinite(frame.timestampMs)) return this.handleNoHand(frame.timestampMs);
+      this.pinchStateMachine.update(frame.timestampMs, null);
+      this.openPalmStateMachine.update(frame.timestampMs, null);
+      const twoHandEvents = this.twoHandStateMachine.update(frame.timestampMs, null, false);
+      this.updateTwoHandOwnership(twoHandEvents);
+      return twoHandEvents;
     }
-    return events;
+    const hands = frame.hands
+      .filter(isValidTrackedHand)
+      .slice(0, 2);
+
+    if (hands.length === 0) return this.handleNoHand(frame.timestampMs);
+    this.resetNoHandTracking();
+
+    if (hands.length === 2) return this.handleTwoHands(hands, frame.timestampMs);
+
+    const twoHandEvents = this.twoHandStateMachine.update(frame.timestampMs, null, false);
+    if (this.twoHandOwnsInput || twoHandEvents.length > 0) {
+      this.updateTwoHandOwnership(twoHandEvents);
+      this.cancelSingleHandModes(frame.timestampMs);
+      return twoHandEvents;
+    }
+    return this.handleSingleHand(hands[0].landmarks, frame.timestampMs, viewport);
   }
 
   reset(): void {
     this.pointerFilter.reset();
     this.pinchStateMachine.reset();
-    this.openPalmFrames = 0;
-    this.openPalmActive = false;
-    this.noHandFrames = 0;
-    this.noHandActive = false;
+    this.openPalmStateMachine.reset();
+    this.twoHandStateMachine = this.createTwoHandStateMachine();
+    this.twoHandOwnsInput = false;
     this.noHandSince = null;
+    this.noHandActive = false;
     this.autoExitActive = false;
-    this.resetTwoHandBaseline();
   }
 
-  private handleNoHand(timestamp = performance.now()): GestureEvent[] {
-    if (this.noHandSince === null) this.noHandSince = timestamp;
-    const pinch = this.pinchStateMachine.update(timestamp, null);
-    this.openPalmFrames = 0;
-    this.openPalmActive = false;
-    this.resetTwoHandBaseline();
-    this.noHandFrames += 1;
-    const events: GestureEvent[] = pinch.released ? [{ type: "pinch_state", active: false }] : [];
-    if (!this.noHandActive && this.noHandFrames >= this.config.noHandTimeoutFrames) {
+  private handleSingleHand(
+    landmarks: HandLandmarks,
+    timestampMs: number,
+    viewport: PointerViewport,
+  ): GestureEvent[] {
+    const pointer = this.pointerFilter.update(
+      timestampMs,
+      { x: clamp01(landmarks[8].x), y: clamp01(landmarks[8].y) },
+      viewport,
+    );
+    const pinch = this.pinchStateMachine.update(timestampMs, landmarks);
+    const pinchHasPriority = pinch.active
+      || pinch.activated
+      || (pinch.ratio !== null && pinch.ratio <= this.config.pinchEnterRatio);
+    const events: GestureEvent[] = [];
+
+    if (pinch.activated) {
+      events.push({ type: "pinch_state", active: true }, { type: "pinch", ...pointer });
+    }
+    if (pinch.released) events.push({ type: "pinch_state", active: false });
+    if (pinchHasPriority) {
+      this.openPalmStateMachine.interruptCandidate();
+      return events;
+    }
+
+    const palm = this.openPalmStateMachine.update(timestampMs, landmarks);
+    if (palm.activated) events.push({ type: "open_palm" });
+    if (isOpenPalm(landmarks, this.openPalmConfig())) return events;
+
+    events.push({ type: "pointer", ...pointer });
+    return events;
+  }
+
+  private handleTwoHands(hands: readonly TrackedHand[], timestampMs: number): GestureEvent[] {
+    this.pinchStateMachine.update(timestampMs, null);
+    this.openPalmStateMachine.interruptCandidate();
+    const bothOpenPalms = hands.every((hand) =>
+      isOpenPalm(hand.landmarks, this.openPalmConfig()));
+    const twoHandEvents = this.twoHandStateMachine.update(
+      timestampMs,
+      hands.map((hand) => ({
+        handedness: hand.handedness,
+        landmarks: hand.landmarks,
+      })),
+      bothOpenPalms,
+    );
+    this.updateTwoHandOwnership(twoHandEvents);
+    return twoHandEvents;
+  }
+
+  private handleNoHand(timestampMs: number): GestureEvent[] {
+    if (!Number.isFinite(timestampMs)) return [];
+    if (this.noHandSince === null || timestampMs < this.noHandSince) {
+      this.noHandSince = timestampMs;
+      this.noHandActive = false;
+      this.autoExitActive = false;
+    }
+
+    const events: GestureEvent[] = [];
+    const pinch = this.pinchStateMachine.update(timestampMs, null);
+    if (pinch.released) events.push({ type: "pinch_state", active: false });
+    this.openPalmStateMachine.update(timestampMs, null);
+    const twoHandEvents = this.twoHandStateMachine.update(timestampMs, null, false);
+    this.updateTwoHandOwnership(twoHandEvents);
+    events.push(...twoHandEvents);
+
+    const elapsed = timestampMs - this.noHandSince;
+    if (!this.noHandActive && elapsed >= this.config.trackingDropoutGraceMs) {
       this.noHandActive = true;
       this.pointerFilter.reset();
       events.push({ type: "no_hand" });
     }
-    if (
-      !this.autoExitActive &&
-      this.noHandSince !== null &&
-      timestamp - this.noHandSince >= this.config.autoExitTimeoutMs
-    ) {
+    if (!this.autoExitActive && elapsed >= this.config.autoExitTimeoutMs) {
       this.autoExitActive = true;
       events.push({ type: "auto_exit" });
     }
     return events;
   }
 
-  private handleTwoHands(left: HandLandmarks, right: HandLandmarks): GestureEvent[] {
-    const leftIndex = left[8];
-    const rightIndex = right[8];
-    const currentDistance = distance(leftIndex, rightIndex);
-    const currentAngle = Math.atan2(rightIndex.y - leftIndex.y, rightIndex.x - leftIndex.x);
-    const events: GestureEvent[] = [];
-
-    if (this.previousTwoHandDistance !== null) {
-      const distanceDelta = currentDistance - this.previousTwoHandDistance;
-      if (Math.abs(distanceDelta) >= this.config.twoHandChangeThreshold) {
-        events.push({ type: "zoom", delta: distanceDelta });
-      }
-    }
-    if (this.previousTwoHandAngle !== null) {
-      const angleDelta = shortestAngleDelta(currentAngle, this.previousTwoHandAngle);
-      if (Math.abs(angleDelta) >= this.config.twoHandRotationThreshold) {
-        events.push({ type: "rotate", delta: angleDelta });
-      }
-    }
-    this.previousTwoHandDistance = currentDistance;
-    this.previousTwoHandAngle = currentAngle;
-    return events;
+  private cancelSingleHandModes(timestampMs: number): void {
+    this.pinchStateMachine.update(timestampMs, null);
+    this.openPalmStateMachine.interruptCandidate();
   }
 
-  private resetTwoHandBaseline(): void {
-    this.previousTwoHandDistance = null;
-    this.previousTwoHandAngle = null;
+  private resetNoHandTracking(): void {
+    this.noHandSince = null;
+    this.noHandActive = false;
+    this.autoExitActive = false;
   }
-}
 
-function distance(left: HandLandmark, right: HandLandmark): number {
-  return Math.hypot(left.x - right.x, left.y - right.y);
-}
+  private updateTwoHandOwnership(events: readonly GestureEvent[]): void {
+    if (events.some((event) => event.type === "two_hand_start")) this.twoHandOwnsInput = true;
+    if (events.some((event) => event.type === "two_hand_end")) this.twoHandOwnsInput = false;
+  }
 
-function isOpenPalm(landmarks: readonly HandLandmark[]): boolean {
-  const fingerPairs: Array<[number, number]> = [[8, 6], [12, 10], [16, 14], [20, 18]];
-  return fingerPairs.filter(([tip, pip]) => landmarks[tip].y < landmarks[pip].y).length >= 4;
+  private openPalmConfig() {
+    return {
+      activationMs: this.config.openPalmActivationMs,
+      cooldownMs: this.config.openPalmCooldownMs,
+      dropoutGraceMs: this.config.trackingDropoutGraceMs,
+      jointCosineThreshold: OPEN_PALM_JOINT_COSINE_THRESHOLD,
+      tipExtensionRatio: OPEN_PALM_TIP_EXTENSION_RATIO,
+      palmEpsilon: this.config.pinchPalmEpsilon,
+    };
+  }
+
+  private createTwoHandStateMachine(): TwoHandTransformStateMachine {
+    return new TwoHandTransformStateMachine({
+      activationMs: this.config.twoHandActivationMs,
+      zoomDeadzoneRatio: this.config.twoHandZoomDeadzoneRatio,
+      rotationDeadzoneDegrees: this.config.twoHandRotationDeadzoneDegrees,
+      maxZoomRatePerSecond: this.config.twoHandMaxZoomRatePerSecond,
+      maxRotationRateDegreesPerSecond: this.config.twoHandMaxRotationRateDegreesPerSecond,
+      dropoutGraceMs: this.config.twoHandDropoutGraceMs,
+    });
+  }
 }
 
 function normalizeHands(input: GestureInput): HandLandmarks[] {
@@ -224,13 +301,22 @@ function normalizeHands(input: GestureInput): HandLandmarks[] {
   return singleHand.length >= 21 ? [[...singleHand]] : [];
 }
 
-function shortestAngleDelta(current: number, previous: number): number {
-  let delta = current - previous;
-  while (delta > Math.PI) delta -= Math.PI * 2;
-  while (delta < -Math.PI) delta += Math.PI * 2;
-  return delta;
-}
-
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
+}
+
+function isValidFrameMetadata(frame: HandFrame): boolean {
+  return Number.isFinite(frame.timestampMs)
+    && frame.timestampMs >= 0
+    && Number.isFinite(frame.frameWidth)
+    && frame.frameWidth > 0
+    && Number.isFinite(frame.frameHeight)
+    && frame.frameHeight > 0;
+}
+
+function isValidTrackedHand(hand: TrackedHand): boolean {
+  return hand.landmarks.length === 21
+    && hand.landmarks.every((landmark) => Number.isFinite(landmark.x)
+      && Number.isFinite(landmark.y)
+      && (landmark.z === undefined || Number.isFinite(landmark.z)));
 }

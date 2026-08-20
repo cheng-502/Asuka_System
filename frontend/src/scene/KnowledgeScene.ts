@@ -19,6 +19,7 @@ export class KnowledgeScene {
   private readonly raycaster = new THREE.Raycaster();
   private hoveredNodeId: string | null = null;
   private selectedNodeId: string | null = null;
+  private handTransformDampingEnabled: boolean | null = null;
   private readonly onHover?: (nodeId: string | null) => void;
   private readonly onSelect?: (nodeId: string | null) => void;
 
@@ -101,18 +102,32 @@ export class KnowledgeScene {
     this.updateHoveredNode(null);
   }
 
-  zoomBy(delta: number): void {
-    if (delta === 0) return;
-    const dollyScale = 1 + Math.min(Math.abs(delta) * 4, 0.16);
-    if (delta > 0) this.controls.dollyIn(dollyScale);
-    else this.controls.dollyOut(dollyScale);
+  beginHandTransform(): void {
+    this.handTransformDampingEnabled ??= this.controls.enableDamping;
+    const position = this.camera.position.clone();
+    const target = this.controls.target.clone();
+    const zoom = this.camera.zoom;
+    this.controls.enableDamping = false;
     this.controls.update();
+    this.camera.position.copy(position);
+    this.controls.target.copy(target);
+    this.camera.zoom = zoom;
+    this.camera.updateProjectionMatrix();
+    this.controls.enabled = false;
   }
 
-  rotateBy(delta: number): void {
-    if (delta === 0) return;
-    this.controls.rotateLeft(delta * 1.5);
-    this.controls.update();
+  applyHandTransform(zoomLogDelta: number, rotationDeltaRad: number): void {
+    if (zoomLogDelta > 0) this.controls.dollyIn(handZoomScale(zoomLogDelta));
+    if (zoomLogDelta < 0) this.controls.dollyOut(handZoomScale(zoomLogDelta));
+    if (rotationDeltaRad !== 0) this.controls.rotateLeft(rotationDeltaRad);
+  }
+
+  endHandTransform(): void {
+    this.controls.enabled = true;
+    if (this.handTransformDampingEnabled !== null) {
+      this.controls.enableDamping = this.handTransformDampingEnabled;
+      this.handTransformDampingEnabled = null;
+    }
   }
 
   setPointer(normalizedX: number, normalizedY: number): void {
@@ -181,4 +196,8 @@ export class KnowledgeScene {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
+}
+
+export function handZoomScale(zoomLogDelta: number): number {
+  return Math.exp(Math.abs(zoomLogDelta));
 }

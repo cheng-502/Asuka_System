@@ -5,8 +5,9 @@ export interface GestureInteractionTarget {
   selectAtPointer(x: number, y: number): void;
   clearSelection(): void;
   clearHover(): void;
-  zoomBy(delta: number): void;
-  rotateBy(delta: number): void;
+  beginHandTransform(): void;
+  applyHandTransform(zoomLogDelta: number, rotationDeltaRad: number): void;
+  endHandTransform(): void;
 }
 
 export class InteractionController {
@@ -36,7 +37,10 @@ export class InteractionController {
       this.target.clearHover();
       this.onExit?.();
     }
-    if (event.type === "zoom") this.target.zoomBy(event.delta);
-    if (event.type === "rotate") this.target.rotateBy(event.delta);
+    if (event.type === "two_hand_start") this.target.beginHandTransform();
+    if (event.type === "two_hand_transform") {
+      this.target.applyHandTransform(event.zoomLogDelta, event.rotationDeltaRad);
+    }
+    if (event.type === "two_hand_end") this.target.endHandTransform();
   }
 }

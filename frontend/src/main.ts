@@ -75,6 +75,7 @@ async function boot(): Promise<void> {
     function stopCamera(): void {
       tracker?.stop();
       gestureEngine.reset();
+      scene.endHandTransform();
       scene.clearHover();
       pointerPresenter?.hide();
       cameraPreview?.setIdle();
@@ -92,14 +93,20 @@ async function boot(): Promise<void> {
       cameraPreview?.setStatus("Default interaction calibration active");
     }
     tracker = new HandTracker({
+      minConfidence: calibrationResult.profile.tracking.min_confidence,
       onFrame: (frame) => {
         const rawHands = frame.hands.map((hand) => hand.landmarks);
         cameraPreview?.setLandmarks(rawHands.length ? rawHands : null);
         if (!shouldShowPointerForHandCount(rawHands.length)) pointerPresenter?.hide();
-        const displayHands = rawHands.map(mirrorHandLandmarks);
-        for (const event of gestureEngine.update(
-          displayHands.length ? displayHands : null,
-          frame.timestampMs,
+        const interactionFrame = {
+          ...frame,
+          hands: frame.hands.map((hand) => ({
+            ...hand,
+            landmarks: mirrorHandLandmarks(hand.landmarks),
+          })),
+        };
+        for (const event of gestureEngine.updateFrame(
+          interactionFrame,
           { width: window.innerWidth, height: window.innerHeight },
         )) {
           if (event.type === "pointer") pointerPresenter?.show(event.x, event.y);

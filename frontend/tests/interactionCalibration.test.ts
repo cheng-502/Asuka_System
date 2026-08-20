@@ -73,6 +73,15 @@ describe("interaction calibration profile", () => {
       pinchActivationMs: 120,
       pinchCooldownMs: 150,
       pinchPalmEpsilon: 0.01,
+      trackingDropoutGraceMs: 150,
+      openPalmActivationMs: 250,
+      openPalmCooldownMs: 500,
+      twoHandActivationMs: 200,
+      twoHandZoomDeadzoneRatio: 0.03,
+      twoHandRotationDeadzoneDegrees: 3,
+      twoHandMaxZoomRatePerSecond: 1,
+      twoHandMaxRotationRateDegreesPerSecond: 120,
+      twoHandDropoutGraceMs: 150,
     });
   });
 

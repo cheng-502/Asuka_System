@@ -9,7 +9,7 @@ export type Handedness = "Left" | "Right" | "Unknown";
 export interface TrackedHand {
   landmarks: NormalizedLandmark[];
   handedness: Handedness;
-  confidence: number;
+  handednessConfidence: number;
 }
 
 export interface HandFrame {
