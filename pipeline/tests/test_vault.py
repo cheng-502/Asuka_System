@@ -11,9 +11,19 @@ PIPELINE_SRC = Path(__file__).parents[1] / "src"
 sys.path.insert(0, str(PIPELINE_SRC))
 
 from auaka_pipeline.vault import scan_vault
+from auaka_pipeline.markdown import parse_markdown
 
 
 class VaultScanTest(unittest.TestCase):
+    def test_empty_knowledge_parent_is_treated_as_unset(self) -> None:
+        note = parse_markdown(
+            "---\nknowledge_role: hub\nknowledge_parent: \"\"\n---\n# Hub\n",
+            "AI学习图谱/MOC - AI学习图谱.md",
+        )
+
+        self.assertIsNone(note.knowledge_parent)
+        self.assertIsNone(note.knowledge_parent_raw)
+
     def test_scans_unicode_note_and_normalizes_relative_id(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_dir:
             root = Path(temporary_dir)

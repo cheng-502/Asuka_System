@@ -56,6 +56,8 @@ def parse_markdown(
     summary = _extract_summary(_without_fenced_code(body), summary_max_chars)
     knowledge_role_raw = frontmatter.get("knowledge_role")
     knowledge_parent_raw = frontmatter.get("knowledge_parent")
+    if knowledge_parent_raw is not None and not knowledge_parent_raw.strip():
+        knowledge_parent_raw = None
     knowledge_role: Literal["hub"] | None = (
         "hub" if knowledge_role_raw and knowledge_role_raw.casefold() == "hub" else None
     )
