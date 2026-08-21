@@ -12,7 +12,13 @@ from .chunks import ChunkingConfig
 from .embeddings import load_sentence_transformer_embedder
 from .generate import generate_from_vault
 from .hashing import hash_notes
-from .moc import build_folder_hub_index, build_moc_proposal, moc_proposal_to_dict, render_review_report
+from .moc import (
+    apply_moc_proposal,
+    build_folder_hub_index,
+    build_moc_proposal,
+    moc_proposal_to_dict,
+    render_review_report,
+)
 from .retrieval import RetrievalService, build_chunk_index, load_chunk_index
 from .service import create_search_server
 from .vault import indexing_report, scan_vault
@@ -51,6 +57,16 @@ def main(argv: list[str] | None = None) -> int:
     moc_parser.add_argument("--vault", type=Path, default=RuntimeConfig.from_env().vault_path)
     moc_parser.add_argument(
         "--proposal-dir", type=Path, default=Path("tasks/moc-proposals")
+    )
+    apply_parser = subparsers.add_parser(
+        "moc-apply", help="apply an explicitly approved MOC proposal to a Vault"
+    )
+    apply_parser.add_argument("--vault", type=Path, default=RuntimeConfig.from_env().vault_path)
+    apply_parser.add_argument(
+        "--proposal-dir", type=Path, default=Path("tasks/moc-proposals")
+    )
+    apply_parser.add_argument(
+        "--approve", action="store_true", help="confirm that the proposal may modify the Vault"
     )
     generate_parser.add_argument("--hierarchy-min-similarity", type=float, default=0.60)
     chunks_parser = subparsers.add_parser(
@@ -136,6 +152,56 @@ def main(argv: list[str] | None = None) -> int:
                 indent=2,
             )
         )
+        return 0
+
+    if args.command == "moc-apply":
+        try:
+            if not args.approve:
+                raise PermissionError("explicit approval is required before writing the Vault")
+            report = scan_vault(args.vault)
+            proposal_root = args.proposal_dir.resolve()
+            vault_root = report.root.resolve()
+            try:
+                proposal_root.relative_to(vault_root)
+            except ValueError:
+                pass
+            else:
+                raise ValueError("proposal directory must be outside the Vault")
+            stored = json.loads((proposal_root / "proposal.json").read_text(encoding="utf-8"))
+            generated_mocs = {
+                note.note_id: note.source_text
+                for note in report.notes
+                if Path(note.note_id).name.casefold().startswith("moc - ")
+            }
+            source_notes = tuple(
+                note for note in report.notes if note.note_id not in generated_mocs
+            )
+            index = build_folder_hub_index(source_notes)
+            proposal = build_moc_proposal(
+                index,
+                existing_mocs=generated_mocs,
+                vault_hash=hash_notes(report.notes),
+            )
+            if stored.get("vault_hash") != proposal.vault_hash:
+                raise ValueError("Vault hash mismatch; regenerate the proposal")
+            drafts = {
+                change.path: (proposal_root / "drafts" / Path(change.path)).read_text(
+                    encoding="utf-8"
+                )
+                for change in proposal.changes
+                if change.action in {"create", "update-generated-region"}
+            }
+            written = apply_moc_proposal(
+                vault_root,
+                proposal,
+                drafts=drafts,
+                approved=True,
+                current_vault_hash=proposal.vault_hash,
+            )
+        except Exception as error:
+            print(f"MOC apply failed: {error}")
+            return 1
+        print(json.dumps({"written": list(written)}, ensure_ascii=True, indent=2))
         return 0
 
     if args.command == "generate":

@@ -131,6 +131,60 @@ class CliTest(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertIn("proposal directory must be outside the Vault", output.getvalue())
 
+    def test_moc_apply_requires_approval_and_then_writes_moc(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            vault = root / "vault"
+            proposal_dir = root / "proposal"
+            (vault / "AI学习图谱").mkdir(parents=True)
+            (vault / "AI学习图谱" / "笔记.md").write_text("# 笔记", encoding="utf-8")
+
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    main(
+                        [
+                            "moc-propose",
+                            "--vault",
+                            str(vault),
+                            "--proposal-dir",
+                            str(proposal_dir),
+                        ]
+                    ),
+                    0,
+                )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    main(
+                        [
+                            "moc-apply",
+                            "--vault",
+                            str(vault),
+                            "--proposal-dir",
+                            str(proposal_dir),
+                        ]
+                    ),
+                    1,
+                )
+            self.assertFalse((vault / "AI学习图谱" / "MOC - AI学习图谱.md").exists())
+            self.assertIn("explicit approval", output.getvalue())
+
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    main(
+                        [
+                            "moc-apply",
+                            "--vault",
+                            str(vault),
+                            "--proposal-dir",
+                            str(proposal_dir),
+                            "--approve",
+                        ]
+                    ),
+                    0,
+                )
+            self.assertTrue((vault / "AI学习图谱" / "MOC - AI学习图谱.md").exists())
+
     def test_chunks_command_builds_an_incremental_index_report(self) -> None:
         import numpy as np
 

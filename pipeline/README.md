@@ -53,3 +53,15 @@ The command writes `review-report.md`, `proposal.json`, and MOC drafts outside
 the Vault. Root-level Markdown notes are reported separately and do not produce
 `MOC - 根目录.md`. Embeddings are not used for Hub classification. The output
 directory is ignored because it may contain private Vault path metadata.
+
+After reviewing the proposal, apply it explicitly:
+
+```powershell
+auaka-pipeline moc-apply `
+  --vault "C:\path\to\Obsidian Vault" `
+  --proposal-dir "tasks\moc-proposals" `
+  --approve
+```
+
+The apply command verifies the current Vault Hash before writing and updates
+only the AUAKA generated relation region of existing MOCs.

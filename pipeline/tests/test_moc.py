@@ -10,6 +10,7 @@ from auaka_pipeline.moc import (
     ProposalChange,
     build_folder_hub_index,
     build_moc_proposal,
+    apply_moc_proposal,
     proposal_to_dict,
     render_moc_draft,
     render_review_report,
@@ -132,3 +133,38 @@ def test_proposal_marks_missing_and_manual_marker_conflicts() -> None:
     report = render_review_report(proposal)
     assert "根目录未归类笔记" in report
     assert "conflict" in report
+
+
+def test_apply_requires_explicit_approval_and_preserves_manual_moc_content(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    folder = vault / "AI学习图谱"
+    folder.mkdir(parents=True)
+    (folder / "笔记.md").write_text("# 笔记", encoding="utf-8")
+    index = build_folder_hub_index([note("AI学习图谱/笔记.md")])
+    proposal = build_moc_proposal(index, vault_hash="hash")
+    drafts = {path: text for path, text in proposal.drafts.items()}
+
+    with pytest.raises(PermissionError, match="explicit approval"):
+        apply_moc_proposal(vault, proposal, drafts=drafts, approved=False)
+
+    apply_moc_proposal(vault, proposal, drafts=drafts, approved=True, current_vault_hash="hash")
+    target = folder / "MOC - AI学习图谱.md"
+    assert target.exists()
+
+    manual = target.read_text(encoding="utf-8").replace(
+        "# 导语\n", "# 导语\n\n我的长期主题说明\n"
+    )
+    target.write_text(manual, encoding="utf-8")
+    updated = build_moc_proposal(index, existing_mocs={target.relative_to(vault).as_posix(): manual}, vault_hash="hash")
+    apply_moc_proposal(vault, updated, drafts=updated.drafts, approved=True, current_vault_hash="hash")
+    assert "我的长期主题说明" in target.read_text(encoding="utf-8")
+
+
+def test_apply_rejects_stale_vault_hash(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    (vault / "AI学习图谱").mkdir(parents=True)
+    (vault / "AI学习图谱" / "笔记.md").write_text("# 笔记", encoding="utf-8")
+    index = build_folder_hub_index([note("AI学习图谱/笔记.md")])
+    proposal = build_moc_proposal(index, vault_hash="old")
+    with pytest.raises(ValueError, match="Vault hash mismatch"):
+        apply_moc_proposal(vault, proposal, drafts=proposal.drafts, approved=True, current_vault_hash="new")

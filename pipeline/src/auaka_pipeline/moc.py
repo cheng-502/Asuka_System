@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import os
 from pathlib import PurePosixPath
+import tempfile
 from typing import Literal, Sequence
 
 from .markdown import ParsedNote
@@ -243,6 +245,67 @@ def build_moc_proposal(
     return MocProposal(index=index, drafts=drafts, changes=tuple(changes), vault_hash=vault_hash)
 
 
+def apply_moc_proposal(
+    vault_root: str | os.PathLike[str],
+    proposal: MocProposal,
+    *,
+    drafts: dict[str, str],
+    approved: bool,
+    current_vault_hash: str | None = None,
+) -> tuple[str, ...]:
+    """Apply an explicitly approved proposal with marker-only updates."""
+
+    if not approved:
+        raise PermissionError("explicit approval is required before writing the Vault")
+    if proposal.vault_hash is not None and current_vault_hash != proposal.vault_hash:
+        raise ValueError("Vault hash mismatch; regenerate the proposal")
+
+    root = os.path.abspath(os.fspath(vault_root))
+    prepared: list[tuple[str, str]] = []
+    for change in proposal.changes:
+        if change.action == "conflict":
+            raise ValueError(f"proposal contains conflict: {change.path}")
+        if change.action not in {"create", "update-generated-region"}:
+            continue
+        relative = PurePosixPath(change.path)
+        if any(part in {"", ".", ".."} for part in relative.parts):
+            raise ValueError(f"unsafe proposal path: {change.path}")
+        target = os.path.abspath(os.path.join(root, *relative.parts))
+        if os.path.commonpath((root, target)) != root:
+            raise ValueError(f"proposal path escapes Vault: {change.path}")
+        draft = drafts.get(change.path)
+        if draft is None:
+            raise ValueError(f"missing draft for proposal path: {change.path}")
+        if change.action == "create":
+            if os.path.exists(target):
+                raise FileExistsError(f"MOC already exists: {change.path}")
+            content = draft
+        else:
+            if not os.path.isfile(target):
+                raise FileNotFoundError(f"MOC does not exist: {change.path}")
+            with open(target, encoding="utf-8", newline="") as stream:
+                current = stream.read()
+            if GENERATED_START not in current or GENERATED_END not in current:
+                raise ValueError(f"MOC has no generated region: {change.path}")
+            content = _replace_generated_region(current, _generated_region(draft))
+        prepared.append((target, content))
+
+    written: list[str] = []
+    for target, content in prepared:
+        parent = os.path.dirname(target)
+        os.makedirs(parent, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".auaka-", suffix=".tmp", dir=parent)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+                stream.write(content)
+            os.replace(temporary, target)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        written.append(os.path.relpath(target, root).replace(os.sep, "/"))
+    return tuple(written)
+
+
 def render_review_report(proposal: MocProposal) -> str:
     """Render a human-readable review report for a proposal."""
 
@@ -297,6 +360,12 @@ def _generated_region(text: str) -> str:
     start = text.index(GENERATED_START)
     end = text.index(GENERATED_END, start) + len(GENERATED_END)
     return text[start:end]
+
+
+def _replace_generated_region(current: str, replacement: str) -> str:
+    start = current.index(GENERATED_START)
+    end = current.index(GENERATED_END, start) + len(GENERATED_END)
+    return current[:start] + replacement + current[end:]
 
 
 def _moc_path(folder: str) -> str:
