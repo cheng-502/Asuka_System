@@ -4,7 +4,9 @@
 
 建立一个“先生成建议、人工审核、批准后写入”的 Hub/MOC 管理流程。
 
-系统根据 Obsidian Vault 的文件夹结构，为每个包含 Markdown 笔记的非根目录文件夹生成一个候选 `MOC - 文件夹名称.md`。Hub 的父子关系只根据文件夹路径确定，不使用 embedding 分类。
+当前实现采用已批准的 10 个第一层文件夹白名单：`计算机`、`项目`、`AI学习图谱`、`编程`、`AI-Knowledge-Base`、`modern_genai_bilibili-main`、`摄影与器材`、`阅读`、`python`、`VUE3笔记`。子文件夹只在对应顶层 MOC 内分组，不生成独立 MOC。
+
+系统根据白名单第一层文件夹，为每个有 Markdown 笔记的白名单文件夹生成一个候选 `MOC - 文件夹名称.md`。Hub 的归属只根据第一层文件夹确定，不使用 embedding 分类。
 
 Vault 根目录下直接存在的 Markdown 笔记不生成 `MOC - 根目录.md`，也不自动归入虚拟 Hub。这类笔记会在审核报告中作为“根目录未归类笔记”单独列出。
 
@@ -13,7 +15,9 @@ Vault 根目录下直接存在的 Markdown 笔记不生成 `MOC - 根目录.md`�
 ## 二、已确定的架构规则
 
 - 文件夹层级是 Hub 和 Parent 关系的唯一分类依据。
-- 每个包含 Markdown 笔记的非根目录文件夹生成一个候选 MOC。
+- 每个有 Markdown 笔记的白名单第一层文件夹生成一个候选 MOC。
+- 白名单内的子文件夹只作为 MOC 内部的分组，不生成独立 MOC。
+- 非白名单第一层文件夹不生成 MOC，也不自动归入其他 Hub。
 - Vault 根目录下的直接笔记不生成 MOC，也不自动分配到虚拟 Hub。
 - MOC 文件名统一为 `MOC - 文件夹名称.md`。
 - MOC Frontmatter 使用 `knowledge_role: hub` 声明 Hub。

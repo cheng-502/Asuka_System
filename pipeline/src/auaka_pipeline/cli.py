@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 from .config import RuntimeConfig
@@ -103,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             proposal_root.mkdir(parents=True, exist_ok=True)
             drafts_root = proposal_root / "drafts"
+            if drafts_root.exists():
+                shutil.rmtree(drafts_root)
             for path, content in proposal.drafts.items():
                 draft_path = drafts_root / Path(path)
                 draft_path.parent.mkdir(parents=True, exist_ok=True)

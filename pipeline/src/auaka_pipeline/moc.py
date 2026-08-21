@@ -15,6 +15,19 @@ ProposalAction = Literal[
 ]
 ApprovalState = Literal["pending", "approved", "rejected"]
 
+DEFAULT_TOP_LEVEL_MOC_FOLDERS: tuple[str, ...] = (
+    "计算机",
+    "项目",
+    "AI学习图谱",
+    "编程",
+    "AI-Knowledge-Base",
+    "modern_genai_bilibili-main",
+    "摄影与器材",
+    "阅读",
+    "python",
+    "VUE3笔记",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ProposalChange:
@@ -32,12 +45,15 @@ class FolderHub:
     moc_path: str
     parent_moc_path: str | None
     note_ids: tuple[str, ...]
+    note_groups: tuple[tuple[str, tuple[str, ...]], ...]
 
 
 @dataclass(frozen=True, slots=True)
 class FolderHubIndex:
     hubs: tuple[FolderHub, ...]
     root_note_ids: tuple[str, ...]
+    excluded_note_ids: tuple[str, ...]
+    excluded_top_level_folders: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,8 +68,9 @@ def build_folder_hub_index(
     notes: Sequence[ParsedNote],
     *,
     parent_overrides: dict[str, str] | None = None,
+    top_level_folders: Sequence[str] = DEFAULT_TOP_LEVEL_MOC_FOLDERS,
 ) -> FolderHubIndex:
-    """Build a deterministic folder-only Hub index without embedding calls."""
+    """Build deterministic top-level Hub groups without embedding calls."""
 
     note_ids = [note.note_id.replace("\\", "/") for note in notes]
     if len(note_ids) != len(set(note_ids)):
@@ -65,36 +82,56 @@ def build_folder_hub_index(
     }
     _validate_parent_overrides(normalized_overrides)
 
-    folder_notes: dict[str, list[str]] = {}
+    allowed = {_normalize_folder(folder) for folder in top_level_folders}
+    if len(allowed) != len(tuple(top_level_folders)):
+        raise ValueError("top-level MOC folders must be unique")
+    folder_notes: dict[str, list[str]] = {folder: [] for folder in allowed}
     root_notes: list[str] = []
+    excluded_notes: list[str] = []
+    excluded_folders: set[str] = set()
     for note_id in note_ids:
         path = PurePosixPath(note_id)
         if len(path.parts) <= 1:
             root_notes.append(note_id)
             continue
-        folder = path.parent.as_posix()
-        folder_notes.setdefault(folder, []).append(note_id)
+        top_level = path.parts[0]
+        if top_level not in allowed:
+            excluded_notes.append(note_id)
+            excluded_folders.add(top_level)
+            continue
+        folder_notes[top_level].append(note_id)
 
-    folders = set(folder_notes)
     hubs: list[FolderHub] = []
-    for folder in sorted(folders, key=lambda value: (value.casefold(), value)):
+    for folder in top_level_folders:
+        folder = _normalize_folder(folder)
+        notes_in_hub = tuple(sorted(folder_notes[folder], key=lambda value: (value.casefold(), value)))
+        if not notes_in_hub:
+            continue
+        groups: dict[str, list[str]] = {}
+        for note_id in notes_in_hub:
+            relative_folder = PurePosixPath(note_id).parent.relative_to(PurePosixPath(folder))
+            group = relative_folder.as_posix() if str(relative_folder) != "." else ""
+            groups.setdefault(group, []).append(note_id)
+        note_groups = tuple(
+            (group, tuple(groups[group]))
+            for group in sorted(groups, key=lambda value: (value.casefold(), value))
+        )
         moc_path = _moc_path(folder)
-        parent_folder = normalized_overrides.get(folder)
-        if parent_folder is None:
-            parent_folder = _nearest_candidate_parent(folder, folders)
-        parent_moc_path = _moc_path(parent_folder) if parent_folder else None
         hubs.append(
             FolderHub(
                 folder=folder,
                 moc_path=moc_path,
-                parent_moc_path=parent_moc_path,
-                note_ids=tuple(sorted(folder_notes[folder], key=lambda value: (value.casefold(), value))),
+                parent_moc_path=None,
+                note_ids=notes_in_hub,
+                note_groups=note_groups,
             )
         )
 
     return FolderHubIndex(
         hubs=tuple(hubs),
         root_note_ids=tuple(sorted(root_notes, key=lambda value: (value.casefold(), value))),
+        excluded_note_ids=tuple(sorted(excluded_notes, key=lambda value: (value.casefold(), value))),
+        excluded_top_level_folders=tuple(sorted(excluded_folders, key=lambda value: (value.casefold(), value))),
     )
 
 
@@ -116,10 +153,16 @@ def moc_proposal_to_dict(proposal: MocProposal) -> dict[str, object]:
                 "moc_path": hub.moc_path,
                 "parent_moc_path": hub.parent_moc_path,
                 "note_ids": list(hub.note_ids),
+                "note_groups": [
+                    {"folder": group, "note_ids": list(note_ids)}
+                    for group, note_ids in hub.note_groups
+                ],
             }
             for hub in proposal.index.hubs
         ],
         "root_note_ids": list(proposal.index.root_note_ids),
+        "excluded_note_ids": list(proposal.index.excluded_note_ids),
+        "excluded_top_level_folders": list(proposal.index.excluded_top_level_folders),
         "changes": [proposal_to_dict(change) for change in proposal.changes],
     }
 
@@ -135,22 +178,19 @@ def render_moc_draft(hub: FolderHub, index: FolderHubIndex) -> str:
         "knowledge_role: hub",
         f"knowledge_parent: {json.dumps(parent_value, ensure_ascii=False)}",
         f"hub_source_folder: {json.dumps(hub.folder, ensure_ascii=False)}",
+        'hub_scope: "top-level"',
         "hub_generated: true",
-        'hub_generator_version: "1.0"',
+        'hub_generator_version: "1.1"',
         "---",
         "",
         "# 导语",
         "",
     ]
-    child_hubs = [child for child in index.hubs if child.parent_moc_path == hub.moc_path]
     lines = [*frontmatter, GENERATED_START]
-    if child_hubs:
-        lines.extend(["## 子主题", ""])
-        lines.extend(f"- [[{_wikilink_target(child.moc_path)}]]" for child in child_hubs)
-        lines.append("")
-    if hub.note_ids:
-        lines.extend(["## 笔记", ""])
-        lines.extend(f"- [[{_wikilink_target(note_id)}]]" for note_id in hub.note_ids)
+    for group, note_ids in hub.note_groups:
+        heading = "根目录笔记" if not group else group
+        lines.extend([f"## {heading}", ""])
+        lines.extend(f"- [[{_wikilink_target(note_id)}]]" for note_id in note_ids)
         lines.append("")
     lines.append(GENERATED_END)
     return "\n".join(lines) + "\n"
@@ -224,6 +264,11 @@ def render_review_report(proposal: MocProposal) -> str:
     lines.extend(["", "## 根目录未归类笔记", ""])
     if proposal.index.root_note_ids:
         lines.extend(f"- [[{_wikilink_target(note_id)}]]" for note_id in proposal.index.root_note_ids)
+    else:
+        lines.append("- 无")
+    lines.extend(["", "## 未纳入顶层 MOC 的第一层文件夹", ""])
+    if proposal.index.excluded_top_level_folders:
+        lines.extend(f"- `{folder}`" for folder in proposal.index.excluded_top_level_folders)
     else:
         lines.append("- 无")
     lines.extend(["", "## 审核说明", "", "批准前不会修改 Vault。", ""])

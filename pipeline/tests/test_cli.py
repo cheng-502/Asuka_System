@@ -87,8 +87,8 @@ class CliTest(unittest.TestCase):
             root = Path(temporary_dir)
             vault = root / "vault"
             output_dir = root / "proposal"
-            (vault / "主题").mkdir(parents=True)
-            (vault / "主题" / "笔记.md").write_text(
+            (vault / "AI学习图谱").mkdir(parents=True)
+            (vault / "AI学习图谱" / "笔记.md").write_text(
                 "# 笔记\n\n内容", encoding="utf-8"
             )
 
@@ -108,15 +108,15 @@ class CliTest(unittest.TestCase):
             self.assertTrue((output_dir / "review-report.md").exists())
             self.assertTrue((output_dir / "proposal.json").exists())
             self.assertTrue(
-                (output_dir / "drafts" / "主题" / "MOC - 主题.md").exists()
+                (output_dir / "drafts" / "AI学习图谱" / "MOC - AI学习图谱.md").exists()
             )
-            self.assertFalse((vault / "主题" / "MOC - 主题.md").exists())
+            self.assertFalse((vault / "AI学习图谱" / "MOC - AI学习图谱.md").exists())
 
     def test_moc_propose_rejects_output_inside_vault(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_dir:
             vault = Path(temporary_dir)
-            (vault / "主题").mkdir()
-            (vault / "主题" / "笔记.md").write_text("# 笔记", encoding="utf-8")
+            (vault / "AI学习图谱").mkdir()
+            (vault / "AI学习图谱" / "笔记.md").write_text("# 笔记", encoding="utf-8")
             output = io.StringIO()
             with redirect_stdout(output):
                 exit_code = main(
