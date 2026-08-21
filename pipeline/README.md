@@ -39,3 +39,17 @@ auaka-pipeline scan --vault "C:\path\to\Obsidian Vault"
 
 The command prints JSON-safe counts for included notes, exclusions, unresolved
 Wikilinks, and read errors.
+
+To generate folder-based Hub/MOC proposals for review without modifying the
+Vault:
+
+```powershell
+auaka-pipeline moc-propose `
+  --vault "C:\path\to\Obsidian Vault" `
+  --proposal-dir "tasks\moc-proposals"
+```
+
+The command writes `review-report.md`, `proposal.json`, and MOC drafts outside
+the Vault. Root-level Markdown notes are reported separately and do not produce
+`MOC - 根目录.md`. Embeddings are not used for Hub classification. The output
+directory is ignored because it may contain private Vault path metadata.

@@ -25,6 +25,7 @@ data/chunks/
 data/knowledge-space.real.json
 frontend/public/data/knowledge-space.real.json
 pipeline/reports/
+tasks/moc-proposals/
 pipeline/data/model-cache/
 pipeline/data/chunks/
 **/*.egg-info/
